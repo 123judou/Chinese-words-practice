@@ -27,6 +27,10 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+    html {
+      overflow-anchor: none;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
       background-color: var(--bg);
@@ -35,7 +39,7 @@
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
-      padding: 16px 14px 40px;
+      padding: 14px 12px 44px;
     }
 
     .container {
@@ -43,7 +47,7 @@
       max-width: 640px;
       display: flex;
       flex-direction: column;
-      gap: 11px;
+      gap: 10px;
     }
 
     header {
@@ -79,21 +83,20 @@
       flex-wrap: wrap;
     }
 
-    /* 详细玩法说明（支持展开/收起） */
     .usage-guide {
       background: #f1efe9;
       border-radius: 10px;
-      padding: 9px 12px;
+      padding: 8px 12px;
       font-size: 12px;
       color: var(--sub);
-      line-height: 1.6;
+      line-height: 1.55;
     }
 
     .usage-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 3px;
+      margin-bottom: 2px;
     }
 
     .usage-header strong {
@@ -130,15 +133,14 @@
       display: block;
     }
 
-    /* 进度、今日分数与练习时间统计栏 */
     .overall-progress {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 9px 12px;
+      padding: 8px 12px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 5px;
       font-size: 12px;
       color: var(--sub);
     }
@@ -275,7 +277,6 @@
       cursor: pointer;
     }
 
-    /* 错题本专属提示条 */
     .wrong-banner {
       display: none;
       background: var(--accent-light);
@@ -298,7 +299,7 @@
       background: var(--card);
       border-radius: 16px;
       border: 1px solid var(--border);
-      padding: 20px 16px;
+      padding: 18px 14px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -307,8 +308,8 @@
 
     .char-status-tag {
       position: absolute;
-      top: 14px;
-      right: 14px;
+      top: 12px;
+      right: 12px;
       font-size: 11px;
       padding: 2px 8px;
       border-radius: 10px;
@@ -328,44 +329,51 @@
 
     .prompt-area {
       text-align: center;
-      margin-bottom: 18px;
+      margin-bottom: 16px;
       width: 100%;
-      padding: 0 12px;
+      padding: 0 8px;
     }
 
     .tag-line {
       font-size: 11px;
       color: var(--sub);
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .pinyin {
-      font-size: 28px;
+      font-size: 26px;
       color: var(--accent);
       font-weight: 600;
       letter-spacing: 2px;
-      margin-bottom: 8px;
-      min-height: 36px;
+      margin-bottom: 6px;
+      min-height: 34px;
     }
 
     .meaning {
-      font-size: 15px;
+      font-size: 14px;
       color: var(--text);
-      line-height: 1.5;
-      min-height: 22px;
-      max-height: 88px;
-      overflow-y: auto;
+      line-height: 1.55;
+      min-height: 20px;
     }
 
+    /* 手机端竖排、宽屏横向排列 */
     .grids-container {
       display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
-      gap: 12px;
+      justify-content: center;
+      gap: 14px;
       width: 100%;
-      min-height: 160px;
+      min-height: 220px;
       margin: 4px 0;
+    }
+
+    @media (min-width: 560px) {
+      .grids-container {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
     }
 
     .grid-wrapper {
@@ -422,16 +430,33 @@
       width: 100%;
       height: 100%;
     }
-    .free-canvas { z-index: 3; cursor: crosshair; touch-action: none; }
-    .writer-target { z-index: 2; pointer-events: none; }
-    .fallback-char {
+    .free-canvas {
       z-index: 2;
+      cursor: crosshair;
+      touch-action: none;
+      transition: opacity 0.2s ease;
+    }
+    /* 核对答案时，手写笔迹自动变浅灰，让红字清晰凸显 */
+    .free-canvas.dimmed {
+      opacity: 0.22;
+    }
+    /* 全局隐藏我的字迹状态 */
+    .free-canvas.hidden-strokes {
+      opacity: 0 !important;
+    }
+
+    .writer-target {
+      z-index: 3;
+      pointer-events: none;
+    }
+    .fallback-char {
+      z-index: 3;
       pointer-events: none;
       display: flex;
       align-items: center;
       justify-content: center;
       font-family: "Kaiti SC", "STKaiti", "KaiTi", "楷体", serif;
-      color: rgba(184, 59, 42, 0.42);
+      color: rgba(184, 59, 42, 0.85);
       user-select: none;
       line-height: 1;
     }
@@ -446,18 +471,20 @@
 
     .actions {
       display: flex;
-      gap: 10px;
-      margin-top: 14px;
+      gap: 8px;
+      margin-top: 12px;
       width: 100%;
-      max-width: 460px;
+      max-width: 480px;
       justify-content: center;
+      flex-wrap: wrap;
     }
 
     .actions .btn {
       flex: 1;
-      padding: 11px 8px;
+      min-width: 84px;
+      padding: 11px 6px;
       font-weight: 500;
-      font-size: 14px;
+      font-size: 13.5px;
     }
 
     .btn-wrong {
@@ -470,6 +497,18 @@
       background: #edf7ed;
       color: var(--green);
       border-color: #c3e6c3;
+    }
+
+    .btn-toggle-eye {
+      background: #f5f3ee;
+      color: var(--text);
+      border-color: #dcd8cf;
+    }
+
+    .btn-toggle-eye.active-hide {
+      background: var(--accent-light);
+      color: var(--accent);
+      border-color: #f0c0b8;
     }
 
     .footer-info {
@@ -640,21 +679,19 @@
     </div>
   </header>
 
-  <!-- 1. 完整玩法说明（覆盖抽词、今日得分、错题本、批量导入） -->
   <div class="usage-guide" id="usage-guide">
     <div class="usage-header">
       <strong>💡 网站玩法指南</strong>
       <button class="usage-toggle" id="usage-toggle-btn" onclick="toggleUsageGuide()">展开全部说明 ▾</button>
     </div>
     <ul class="usage-list">
-      <li><strong>① 盲写与核对：</strong>看拼音与释义在田字格手写（写错可点“撤回一笔”），点<strong>「核对答案」</strong>叠加红字自查，标记对错。</li>
+      <li><strong>① 盲写与核对：</strong>看拼音与释义在田字格手写（写错可点“撤回一笔”），点<strong>「核对答案」</strong>后你的笔迹会自动变淡，也可一键全局隐藏/显示自己的字迹。</li>
       <li><strong>② 错题本专练：</strong>标为“写错了”的词自动存入顶部<strong>「📕 错题本」</strong>；在错题本里重新写对后自动移出。</li>
       <li class="usage-extra"><strong>③ 词库抽词：</strong>点击顶部<strong>「📖 词库抽词」</strong>，可从 1000 常用词库或全量词典中按字数、关键词或自定义数量随机抽题（自动去重）。</li>
       <li class="usage-extra"><strong>④ 今日得分与导入：</strong>上方实时记录<strong>今日答对得分</strong>与<strong>练习时长</strong>；点<strong>「批量导入」</strong>可粘贴任意词语（空格/换行分隔），自动匹配释义加入练习。</li>
     </ul>
   </div>
 
-  <!-- 2. 进度、今日练习分数与时间统计 -->
   <div class="overall-progress">
     <div class="progress-top">
       <span id="mastered-summary">总掌握：0 / 120 词 (0%)</span>
@@ -691,7 +728,6 @@
     </select>
   </div>
 
-  <!-- 错题本专属提示条 -->
   <div class="wrong-banner" id="wrong-banner">
     <span>📕 当前处于<strong>错题本</strong>模式：点“全写对了”将自动移出错题本</span>
     <button class="btn" style="padding:3px 8px; font-size:12px;" onclick="exitWrongBook()">退出错题本</button>
@@ -713,6 +749,7 @@
   </div>
 
   <div class="footer-info">
+    <button class="link-btn" onclick="prevWord()">← 上一词</button>
     <button class="link-btn" onclick="shuffleCurrentList()">🔀 打乱顺序</button>
     <button class="link-btn" onclick="nextWord()">跳过此词 →</button>
   </div>
@@ -918,13 +955,15 @@
   let currentIndex = 0;
   let currentFilter = 'all';
 
+  // 全局设置：核对答案时是否隐藏自己的手写字迹（记忆保存）
+  let hideMyStrokesGlobal = false;
+
   let writers = [];
   let canvases = [];
   let strokeHistory = [];
   let isRevealed = false;
-  let currentGridSize = 180;
+  let currentGridSize = 200;
 
-  // 今日练习时间与今日得分统计
   let dailyStats = {
     todayDate: '',
     todaySeconds: 0,
@@ -940,12 +979,22 @@
   let currentFilteredDict = [];
 
   async function init() {
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
     loadFromStorage();
     startPracticeTimer();
     document.getElementById('category-select').value = currentFilter;
-    applyFilter(true);
+    applyFilter(true, false);
+
+    let lastWidth = document.documentElement.clientWidth || window.innerWidth;
     window.addEventListener('resize', () => {
-      if (currentList.length > 0 && !isRevealed) renderCurrent();
+      const newWidth = document.documentElement.clientWidth || window.innerWidth;
+      // 仅当横向宽度真正变化（如旋转屏幕）时才重绘，避免手机上下滚动地址栏收起触发重绘
+      if (Math.abs(newWidth - lastWidth) > 20) {
+        lastWidth = newWidth;
+        if (currentList.length > 0 && !isRevealed) renderCurrent(true);
+      }
     });
     await ensureResourcesLoaded();
     enrichMissingMeanings();
@@ -991,6 +1040,7 @@
       const state = JSON.parse(savedState);
       currentFilter = state.filter || 'all';
       currentIndex = state.index || 0;
+      hideMyStrokesGlobal = !!state.hideMyStrokesGlobal;
     }
     updateStatsUI();
     updateDailyStatsUI();
@@ -1006,7 +1056,8 @@
   function saveStateOnly() {
     localStorage.setItem('tbwz_state_v9', JSON.stringify({
       filter: currentFilter,
-      index: currentIndex
+      index: currentIndex,
+      hideMyStrokesGlobal: hideMyStrokesGlobal
     }));
   }
 
@@ -1049,7 +1100,6 @@
     const totalMins = Math.floor(dailyStats.totalSeconds / 60);
     document.getElementById('total-time-text').textContent = `累计 ${totalMins}分`;
 
-    // 今日得分：每写对 1 词计 10 分
     const score = dailyStats.todayRight * 10;
     document.getElementById('today-score-text').textContent = `${score} 分 (对${dailyStats.todayRight}/练${dailyStats.todayTotal})`;
   }
@@ -1069,7 +1119,7 @@
     });
     if (updated) {
       saveToStorage();
-      if (currentList.length > 0 && !isRevealed) renderCurrent();
+      if (currentList.length > 0 && !isRevealed) renderCurrent(true);
     }
   }
 
@@ -1096,14 +1146,12 @@
     sel.options[2].text = `错题本 (${wrongCount})`;
     sel.options[3].text = `已掌握 (${masteredCount})`;
 
-    // 同步更新顶部独立的「📕 错题本」按钮状态与数量
     const wrongBtn = document.getElementById('wrong-book-btn');
     wrongBtn.textContent = `📕 错题本 (${wrongCount})`;
     wrongBtn.classList.toggle('active', currentFilter === 'wrong');
     document.getElementById('wrong-banner').classList.toggle('show', currentFilter === 'wrong');
   }
 
-  // 顶部「📕 错题本」快捷切换
   function toggleWrongBook() {
     const sel = document.getElementById('category-select');
     if (currentFilter === 'wrong') {
@@ -1146,10 +1194,10 @@
       }
     }
     updateStatsUI();
-    applyFilter(false);
+    applyFilter(false, false);
   }
 
-  function applyFilter(keepSavedIndex = false) {
+  function applyFilter(keepSavedIndex = false, preserveScroll = true) {
     if (currentFilter === 'all') {
       currentList = [...wordList];
     } else if (currentFilter === 'unpracticed') {
@@ -1166,7 +1214,7 @@
       currentIndex = 0;
     }
     saveStateOnly();
-    renderCurrent();
+    renderCurrent(preserveScroll);
   }
 
   function shuffleCurrentList() {
@@ -1177,20 +1225,21 @@
     }
     currentIndex = 0;
     saveStateOnly();
-    renderCurrent();
+    renderCurrent(true);
     document.getElementById('status-text').textContent = "已打乱当前顺序";
   }
 
+  // 手机端竖排大格子尺寸，宽屏横向并排尺寸
   function calcGridSize(charCount) {
     const screenW = document.documentElement.clientWidth || window.innerWidth || 375;
-    const containerWidth = Math.max(260, Math.min(screenW - 56, 580));
-
-    if (charCount === 1) return Math.min(240, containerWidth);
-    if (charCount === 2) return Math.max(120, Math.min(210, Math.floor((containerWidth - 16) / 2)));
-    if (charCount === 3) return Math.max(95, Math.min(165, Math.floor((containerWidth - 28) / 3)));
-    if (containerWidth < 520) {
-      return Math.max(110, Math.floor((containerWidth - 16) / 2));
+    if (screenW < 560) {
+      // 手机端单列竖排，给足大格子方便手写
+      return Math.min(230, Math.max(185, screenW - 96));
     }
+    const containerWidth = Math.min(screenW - 56, 580);
+    if (charCount === 1) return Math.min(240, containerWidth);
+    if (charCount === 2) return Math.min(210, Math.floor((containerWidth - 16) / 2));
+    if (charCount === 3) return Math.min(165, Math.floor((containerWidth - 28) / 3));
     return Math.min(130, Math.floor((containerWidth - 40) / 4));
   }
 
@@ -1199,9 +1248,6 @@
     let cleaned = rawExp.replace(/\n+/g, '；').trim();
     if (word && cleaned.includes(word)) {
       cleaned = cleaned.split(word).join('【 】');
-    }
-    if (cleaned.length > 95) {
-      cleaned = cleaned.slice(0, 95) + '...';
     }
     return cleaned;
   }
@@ -1220,79 +1266,107 @@
     return '';
   }
 
-  function renderCurrent() {
-    const statusEl = document.getElementById('status-text');
-    const charTagEl = document.getElementById('char-status-tag');
+  // 切题前后锁定滚动条高度，彻底杜绝手机端网页往上弹跳
+  function preserveScrollPosition(callback) {
+    const savedY = window.scrollY || window.pageYOffset || 0;
     const gridsContainer = document.getElementById('grids-container');
-    gridsContainer.innerHTML = '';
-    writers = [];
-    canvases = [];
-    strokeHistory = [];
-
-    if (currentList.length === 0) {
-      charTagEl.style.display = 'none';
-      document.getElementById('category-tag').textContent = currentFilter === 'wrong' ? "错题本已清空" : "提示";
-      document.getElementById('pinyin-text').textContent = currentFilter === 'wrong' ? "🎉 太棒了，没有错题啦" : "当前列表为空";
-      document.getElementById('meaning-text').textContent = currentFilter === 'wrong'
-        ? "所有易错词都已攻克，点击“退出错题本”继续练习新词"
-        : "可切换其他分类，或点击右上角“词库抽词”";
-      document.getElementById('progress-badge').textContent = "0 / 0";
-      statusEl.textContent = "";
-      document.getElementById('action-buttons').innerHTML = currentFilter === 'wrong'
-        ? `<button class="btn btn-primary" style="max-width:200px;" onclick="exitWrongBook()">返回全部词库</button>`
-        : '';
-      return;
+    // 在重绘前先锁定当前容器高度，防止页面瞬间塌陷导致浏览器自动向上滚动
+    const prevHeight = gridsContainer.offsetHeight;
+    if (prevHeight > 0) {
+      gridsContainer.style.minHeight = `${prevHeight}px`;
     }
 
-    charTagEl.style.display = 'inline-block';
-    if (currentIndex >= currentList.length) currentIndex = 0;
-    const item = currentList[currentIndex];
-    const chars = [...item.word];
-    const rec = records[item.word];
+    callback();
 
-    if (!rec) {
-      charTagEl.textContent = "未练习";
-      charTagEl.className = "char-status-tag";
-    } else if (rec.status === 'mastered') {
-      charTagEl.textContent = `✓ 已掌握 (对${rec.rightCount}次)`;
-      charTagEl.className = "char-status-tag mastered";
-    } else {
-      charTagEl.textContent = `✗ 易错词 (错${rec.wrongCount}次)`;
-      charTagEl.className = "char-status-tag wrong";
-    }
-
-    document.getElementById('progress-badge').textContent = `${currentIndex + 1} / ${currentList.length}`;
-    document.getElementById('category-tag').textContent = `${item.cat || '日常用语'} · 共 ${chars.length} 字`;
-
-    const pyText = getWordPinyin(item);
-    document.getElementById('pinyin-text').textContent = pyText || `共 ${chars.length} 字词语`;
-    document.getElementById('meaning-text').textContent = sanitizeExplanation(item.word, item.meaning);
-
-    isRevealed = false;
-    currentGridSize = calcGridSize(chars.length);
-
-    chars.forEach((ch, idx) => {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'grid-wrapper';
-      wrapper.id = `grid-box-${idx}`;
-      wrapper.style.width = `${currentGridSize}px`;
-      wrapper.style.height = `${currentGridSize}px`;
-
-      wrapper.innerHTML = `
-        <div class="diagonal-1"></div>
-        <div class="diagonal-2"></div>
-        <div class="writer-target" id="writer-${idx}"></div>
-        <canvas class="free-canvas" id="canvas-${idx}" width="${currentGridSize}" height="${currentGridSize}"></canvas>
-      `;
-      gridsContainer.appendChild(wrapper);
-
-      const cvs = wrapper.querySelector('canvas');
-      canvases.push(cvs);
-      bindCanvasEvents(cvs, idx);
+    // 恢复滚动位置并在下一帧再次校准
+    window.scrollTo(0, savedY);
+    requestAnimationFrame(() => {
+      window.scrollTo(0, savedY);
+      gridsContainer.style.minHeight = '220px';
     });
+  }
 
-    statusEl.textContent = `请在上方 ${chars.length} 个田字格中写出完整词语`;
-    renderButtons(false);
+  function renderCurrent(preserveScroll = true) {
+    const doRender = () => {
+      const statusEl = document.getElementById('status-text');
+      const charTagEl = document.getElementById('char-status-tag');
+      const gridsContainer = document.getElementById('grids-container');
+      gridsContainer.innerHTML = '';
+      writers = [];
+      canvases = [];
+      strokeHistory = [];
+
+      if (currentList.length === 0) {
+        charTagEl.style.display = 'none';
+        document.getElementById('category-tag').textContent = currentFilter === 'wrong' ? "错题本已清空" : "提示";
+        document.getElementById('pinyin-text').textContent = currentFilter === 'wrong' ? "🎉 太棒了，没有错题啦" : "当前列表为空";
+        document.getElementById('meaning-text').textContent = currentFilter === 'wrong'
+          ? "所有易错词都已攻克，点击“退出错题本”继续练习新词"
+          : "可切换其他分类，或点击右上角“词库抽词”";
+        document.getElementById('progress-badge').textContent = "0 / 0";
+        statusEl.textContent = "";
+        document.getElementById('action-buttons').innerHTML = currentFilter === 'wrong'
+          ? `<button class="btn btn-primary" style="max-width:200px;" onclick="exitWrongBook()">返回全部词库</button>`
+          : '';
+        return;
+      }
+
+      charTagEl.style.display = 'inline-block';
+      if (currentIndex >= currentList.length) currentIndex = 0;
+      const item = currentList[currentIndex];
+      const chars = [...item.word];
+      const rec = records[item.word];
+
+      if (!rec) {
+        charTagEl.textContent = "未练习";
+        charTagEl.className = "char-status-tag";
+      } else if (rec.status === 'mastered') {
+        charTagEl.textContent = `✓ 已掌握 (对${rec.rightCount}次)`;
+        charTagEl.className = "char-status-tag mastered";
+      } else {
+        charTagEl.textContent = `✗ 易错词 (错${rec.wrongCount}次)`;
+        charTagEl.className = "char-status-tag wrong";
+      }
+
+      document.getElementById('progress-badge').textContent = `${currentIndex + 1} / ${currentList.length}`;
+      document.getElementById('category-tag').textContent = `${item.cat || '日常用语'} · 共 ${chars.length} 字`;
+
+      const pyText = getWordPinyin(item);
+      document.getElementById('pinyin-text').textContent = pyText || `共 ${chars.length} 字词语`;
+      document.getElementById('meaning-text').textContent = sanitizeExplanation(item.word, item.meaning);
+
+      isRevealed = false;
+      currentGridSize = calcGridSize(chars.length);
+
+      chars.forEach((ch, idx) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'grid-wrapper';
+        wrapper.id = `grid-box-${idx}`;
+        wrapper.style.width = `${currentGridSize}px`;
+        wrapper.style.height = `${currentGridSize}px`;
+
+        wrapper.innerHTML = `
+          <div class="diagonal-1"></div>
+          <div class="diagonal-2"></div>
+          <div class="writer-target" id="writer-${idx}"></div>
+          <canvas class="free-canvas" id="canvas-${idx}" width="${currentGridSize}" height="${currentGridSize}"></canvas>
+        `;
+        gridsContainer.appendChild(wrapper);
+
+        const cvs = wrapper.querySelector('canvas');
+        canvases.push(cvs);
+        bindCanvasEvents(cvs, idx);
+      });
+
+      statusEl.textContent = `请在上方 ${chars.length} 个田字格中写出完整词语`;
+      renderButtons(false);
+    };
+
+    if (preserveScroll) {
+      preserveScrollPosition(doRender);
+    } else {
+      doRender();
+    }
   }
 
   // ================= 手写画布与精准“撤回一笔” =================
@@ -1409,12 +1483,39 @@
     }
   }
 
+  // 应用全局“隐藏/显示我的字迹”样式
+  function applyMyStrokesVisibility() {
+    canvases.forEach(cvs => {
+      if (isRevealed) {
+        cvs.classList.add('dimmed');
+        cvs.classList.toggle('hidden-strokes', hideMyStrokesGlobal);
+      } else {
+        cvs.classList.remove('dimmed', 'hidden-strokes');
+      }
+    });
+  }
+
+  // 全局切换按钮：设定后记忆，接下来所有词都保持该模式
+  function toggleGlobalMyStrokes() {
+    hideMyStrokesGlobal = !hideMyStrokesGlobal;
+    saveStateOnly();
+    applyMyStrokesVisibility();
+    const btn = document.getElementById('toggle-strokes-btn');
+    if (btn) {
+      btn.textContent = hideMyStrokesGlobal ? '👁 显示我的字' : '🙈 隐藏我的字';
+      btn.classList.toggle('active-hide', hideMyStrokesGlobal);
+    }
+  }
+
   function revealAnswer() {
     if (!currentList.length) return;
     const item = currentList[currentIndex];
     const chars = [...item.word];
     isRevealed = true;
     writers = [];
+
+    // 核对答案时，自动淡化黑笔迹或按全局设置直接隐藏黑笔迹
+    applyMyStrokesVisibility();
 
     chars.forEach((ch, idx) => {
       const targetEl = document.getElementById(`writer-${idx}`);
@@ -1435,8 +1536,8 @@
             width: currentGridSize,
             height: currentGridSize,
             padding: Math.round(currentGridSize * 0.08),
-            strokeColor: 'rgba(184, 59, 42, 0.45)',
-            outlineColor: 'rgba(184, 59, 42, 0.12)',
+            strokeColor: 'rgba(184, 59, 42, 0.85)',
+            outlineColor: 'rgba(184, 59, 42, 0.14)',
             strokeAnimationSpeed: 1.3,
             delayBetweenStrokes: 120,
             onLoadCharDataSuccess: () => {
@@ -1450,7 +1551,7 @@
       }
     });
 
-    document.getElementById('status-text').textContent = `正确答案：「${item.word}」，对比红字后标记对错`;
+    document.getElementById('status-text').textContent = `正确答案：「${item.word}」`;
     renderButtons(true);
   }
 
@@ -1469,7 +1570,10 @@
         <button class="btn btn-primary" onclick="revealAnswer()">核对答案</button>
       `;
     } else {
+      const eyeLabel = hideMyStrokesGlobal ? '👁 显示我的字' : '🙈 隐藏我的字';
+      const eyeClass = hideMyStrokesGlobal ? 'btn btn-toggle-eye active-hide' : 'btn btn-toggle-eye';
       box.innerHTML = `
+        <button class="${eyeClass}" id="toggle-strokes-btn" onclick="toggleGlobalMyStrokes()">${eyeLabel}</button>
         <button class="btn" onclick="replayAllWriters()">重播笔顺</button>
         <button class="btn btn-wrong" onclick="markResult(false)">写错了</button>
         <button class="btn btn-right" onclick="markResult(true)">全写对了</button>
@@ -1725,12 +1829,23 @@
   function nextWord() {
     if (currentList.length === 0) return;
     if (['unpracticed', 'wrong', 'mastered'].includes(currentFilter)) {
-      applyFilter(true);
+      applyFilter(true, true);
       return;
     }
     currentIndex = (currentIndex + 1) % currentList.length;
     saveStateOnly();
-    renderCurrent();
+    renderCurrent(true);
+  }
+
+  function prevWord() {
+    if (currentList.length === 0) return;
+    if (['unpracticed', 'wrong', 'mastered'].includes(currentFilter)) {
+      applyFilter(true, true);
+      return;
+    }
+    currentIndex = (currentIndex - 1 + currentList.length) % currentList.length;
+    saveStateOnly();
+    renderCurrent(true);
   }
 
   async function addSingleWord() {
@@ -1817,7 +1932,7 @@
         }
         saveToStorage();
         enrichMissingMeanings();
-        applyFilter(false);
+        applyFilter(false, false);
         closeModal('backup-modal');
         alert('学习记录恢复成功！');
       } else {
@@ -1836,9 +1951,10 @@
       localStorage.removeItem('tbwz_time_v9');
       currentFilter = 'all';
       currentIndex = 0;
+      hideMyStrokesGlobal = false;
       loadFromStorage();
       document.getElementById('category-select').value = 'all';
-      applyFilter(false);
+      applyFilter(false, false);
       enrichMissingMeanings();
       closeModal('backup-modal');
     }
