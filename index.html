@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>提笔忘字 · 整词随手练</title>
+  <title>提笔忘字 · 词典随手练</title>
   <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.19.6/dist/index.js"></script>
   <style>
@@ -50,6 +50,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
     }
 
     h1 {
@@ -72,11 +74,10 @@
 
     .header-actions {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       align-items: center;
     }
 
-    /* 整体掌握度进度条 */
     .overall-progress {
       background: var(--card);
       border: 1px solid var(--border);
@@ -109,7 +110,6 @@
       transition: width 0.3s ease;
     }
 
-    /* 词库添加栏 */
     .toolbar {
       display: flex;
       gap: 8px;
@@ -138,7 +138,7 @@
       border: 1px solid var(--border);
       background: var(--card);
       color: var(--text);
-      padding: 6px 12px;
+      padding: 6px 11px;
       border-radius: 8px;
       font-size: 13px;
       cursor: pointer;
@@ -155,7 +155,13 @@
       border-color: var(--accent);
     }
 
-    /* 分类与模式栏 */
+    .btn-dict {
+      background: var(--accent-light);
+      color: var(--accent);
+      border-color: #f3c6be;
+      font-weight: 600;
+    }
+
     .control-row {
       display: flex;
       justify-content: space-between;
@@ -200,7 +206,6 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
 
-    /* 主练习卡片 */
     .card {
       position: relative;
       background: var(--card);
@@ -256,13 +261,14 @@
     }
 
     .meaning {
-      font-size: 15px;
+      font-size: 14px;
       color: var(--text);
       line-height: 1.5;
       min-height: 22px;
+      max-height: 88px;
+      overflow-y: auto;
     }
 
-    /* 多字田字格横向容器 */
     .grids-container {
       display: flex;
       flex-wrap: wrap;
@@ -407,12 +413,13 @@
     .modal-box {
       background: var(--card);
       width: 100%;
-      max-width: 420px;
+      max-width: 480px;
       border-radius: 16px;
       padding: 20px;
       display: flex;
       flex-direction: column;
       gap: 12px;
+      max-height: 85vh;
     }
 
     .modal-box h3 { font-size: 16px; }
@@ -420,7 +427,7 @@
 
     .modal-box textarea {
       width: 100%;
-      height: 130px;
+      height: 120px;
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 10px;
@@ -431,7 +438,77 @@
     }
 
     .modal-box textarea:focus { border-color: var(--accent); }
-    .modal-footer { display: flex; justify-content: flex-end; gap: 8px; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+
+    /* 词典搜索与列表样式 */
+    .dict-filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .dict-filters input {
+      flex: 1;
+      min-width: 140px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .dict-filters select {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 8px;
+      font-size: 13px;
+      background: #fff;
+    }
+
+    .dict-list {
+      flex: 1;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      min-height: 220px;
+      max-height: 340px;
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: #faf9f6;
+    }
+
+    .dict-item {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .dict-item-info {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .dict-item-word {
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--text);
+    }
+
+    .dict-item-exp {
+      font-size: 12px;
+      color: var(--sub);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
+    }
   </style>
 </head>
 <body>
@@ -440,12 +517,12 @@
   <header>
     <h1>提笔忘字 <span class="badge" id="progress-badge">1 / 60</span></h1>
     <div class="header-actions">
+      <button class="btn btn-dict" onclick="openDictModal()">📖 词典挑词</button>
       <button class="btn" onclick="openImportModal()">批量导入</button>
       <button class="btn" onclick="openBackupModal()">备份</button>
     </div>
   </header>
 
-  <!-- 记忆总进度条 -->
   <div class="overall-progress">
     <div class="progress-top">
       <span id="mastered-summary">已掌握：0 / 60 词</span>
@@ -456,13 +533,11 @@
     </div>
   </div>
 
-  <!-- 单个添加 -->
   <div class="toolbar">
     <input type="text" id="custom-input" placeholder="输入想练的完整词语（如：尴尬、迫不及待）" maxlength="8" />
     <button class="btn btn-primary" onclick="addSingleWord()">+ 添加</button>
   </div>
 
-  <!-- 分类筛选 + 模式切换 -->
   <div class="control-row">
     <select class="category-select" id="category-select" onchange="onFilterChange()">
       <option value="all">全部词库</option>
@@ -473,6 +548,7 @@
       <option value="生活物品">生活物品</option>
       <option value="易错成语">易错成语</option>
       <option value="易错结构">易错结构/形近</option>
+      <option value="词典精选">词典精选</option>
       <option value="自定义">我的自定义</option>
     </select>
 
@@ -482,7 +558,6 @@
     </div>
   </div>
 
-  <!-- 核心练习卡片 -->
   <div class="card">
     <span class="char-status-tag" id="char-status-tag">未练习</span>
 
@@ -492,7 +567,6 @@
       <div class="meaning" id="meaning-text">处境困难，不好处理；神色、态度不自然</div>
     </div>
 
-    <!-- 动态生成多个田字格 -->
     <div class="grids-container" id="grids-container"></div>
 
     <div class="status-bar" id="status-text">请在田字格内写出完整词语，写完点击核对</div>
@@ -505,11 +579,38 @@
   </div>
 </div>
 
+<!-- 词典挑词弹窗 (读取同级目录 ci.json) -->
+<div class="modal-mask" id="dict-modal">
+  <div class="modal-box">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3>📖 中华词语词典挑词</h3>
+      <span id="dict-count-label" style="font-size:12px; color:var(--sub);">准备加载词典...</span>
+    </div>
+    <div class="dict-filters">
+      <input type="text" id="dict-search-input" placeholder="搜汉字或释义（如：食、病、犹豫）" oninput="filterDictResults()" />
+      <select id="dict-len-select" onchange="filterDictResults()">
+        <option value="0">不限字数</option>
+        <option value="2" selected>2字词</option>
+        <option value="3">3字词</option>
+        <option value="4">4字词</option>
+      </select>
+      <button class="btn" onclick="pickRandomFromDict(20)">🎲 随机抽20词</button>
+    </div>
+    <div class="dict-list" id="dict-results-list">
+      <div style="text-align:center; padding:40px 10px; color:var(--sub); font-size:13px;">正在读取 ci.json 词典数据...</div>
+    </div>
+    <div class="modal-footer" style="justify-content: space-between;">
+      <button class="btn" onclick="addAllVisibleDictItems()">全部加入当前列表</button>
+      <button class="btn btn-primary" onclick="closeModal('dict-modal')">完成</button>
+    </div>
+  </div>
+</div>
+
 <!-- 批量导入弹窗 -->
 <div class="modal-mask" id="import-modal">
   <div class="modal-box">
     <h3>批量导入整词词库</h3>
-    <p>粘贴中文词语（用空格、逗号或换行隔开均可）。每个词组将作为一道完整题目，自动生成多个田字格。</p>
+    <p>粘贴中文词语（用空格、逗号或换行隔开均可）。如词典中存在该词，会自动匹配标准释义。</p>
     <textarea id="batch-textarea" placeholder="例如：&#10;单薄 单于 落枕 丢三落四&#10;迫不及待 鬼鬼祟祟 声名狼藉"></textarea>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('import-modal')">取消</button>
@@ -536,9 +637,8 @@
 </div>
 
 <script>
-  // 整词高频词库
+  // 无剧透内置基础词库
   const DEFAULT_WORDS = [
-    // 日常高频
     { word: "尴尬", cat: "日常高频", meaning: "处境困难，不好处理；神色、态度不自然" },
     { word: "喷嚏", cat: "日常高频", meaning: "鼻黏膜受刺激引起的急剧吸气和喷气" },
     { word: "咳嗽", cat: "日常高频", meaning: "呼吸道受刺激而突然向外冲气发声" },
@@ -559,8 +659,6 @@
     { word: "揣摩", cat: "日常高频", meaning: "反复思考推求" },
     { word: "伺候", cat: "日常高频", meaning: "在人身边照料生活" },
     { word: "执拗", cat: "日常高频", meaning: "固执任性，不听从别人的意见" },
-
-    // 生活物品
     { word: "钥匙", cat: "生活物品", meaning: "开锁的工具，或比喻解决问题的方法" },
     { word: "簸箕", cat: "生活物品", meaning: "扬米去糠或收垃圾的器具" },
     { word: "扫帚", cat: "生活物品", meaning: "扫地的工具" },
@@ -576,12 +674,10 @@
     { word: "窗户", cat: "生活物品", meaning: "房屋通风透光的装置" },
     { word: "抽屉", cat: "生活物品", meaning: "桌子、柜子等家具中可抽动的匣子" },
     { word: "衣柜", cat: "生活物品", meaning: "收藏衣物的立式家具" },
-
-    // 易错成语
     { word: "饕餮", cat: "易错成语", meaning: "传说中的贪食恶兽，常用来比喻贪吃的人" },
     { word: "一言九鼎", cat: "易错成语", meaning: "一句话抵得上九鼎重，形容说话分量重" },
     { word: "鬼鬼祟祟", cat: "易错成语", meaning: "形容行动偷偷摸摸，不光明正大" },
-    { word: "再接再厉", cat: "易错成语", meaning: "一次又一次地继续努力（注意不是“励”）" },
+    { word: "再接再厉", cat: "易错成语", meaning: "一次又一次地继续努力" },
     { word: "一筹莫展", cat: "易错成语", meaning: "一点计策也施展不出，形容毫无办法" },
     { word: "墨守成规", cat: "易错成语", meaning: "固执旧法，一成不变，不肯改进" },
     { word: "滥竽充数", cat: "易错成语", meaning: "没有真才实学的人混在行家里面充数" },
@@ -593,22 +689,19 @@
     { word: "戛然而止", cat: "易错成语", meaning: "形容声音突然终止" },
     { word: "寥寥无几", cat: "易错成语", meaning: "形容数量非常稀少，没有几个" },
     { word: "声名狼藉", cat: "易错成语", meaning: "形容名声败坏到了极点" },
-
-    // 易错结构/形近
-    { word: "输赢", cat: "易错结构", meaning: "胜负（“赢”下方依次是：亡、口、月、贝、凡）" },
-    { word: "凹凸", cat: "易错结构", meaning: "周围高中间低，或周围低中间高（均共5画）" },
-    { word: "虐待", cat: "易错结构", meaning: "用残暴狠毒的手段待人（下方开口向右）" },
-    { word: "光临", cat: "易错结构", meaning: "敬辞，称宾客来到（左边是两竖）" },
-    { word: "冠军", cat: "易错结构", meaning: "第一名（“冠”上方是秃宝盖，没有点）" },
-    { word: "冤枉", cat: "易错结构", meaning: "受到不公平的待遇或无端指责（秃宝盖）" },
-    { word: "祝福", cat: "易错结构", meaning: "祝愿人平安幸福（两个字均为示字旁，一点）" },
-    { word: "补充", cat: "易错结构", meaning: "原来不足或有损失时增加一部分（衣字旁，两点）" },
-    { word: "渊博", cat: "易错结构", meaning: "学识深而且广（“博”右上角别漏掉一点）" },
-    { word: "传染", cat: "易错结构", meaning: "病原体传播，或情绪习惯受影响（右上角是“九”）" }
+    { word: "输赢", cat: "易错结构", meaning: "胜负" },
+    { word: "凹凸", cat: "易错结构", meaning: "周围高中间低，或周围低中间高" },
+    { word: "虐待", cat: "易错结构", meaning: "用残暴狠毒的手段待人" },
+    { word: "光临", cat: "易错结构", meaning: "敬辞，称宾客来到" },
+    { word: "冠军", cat: "易错结构", meaning: "体育等各种比赛中的第一名" },
+    { word: "冤枉", cat: "易错结构", meaning: "受到不公平的待遇或无端指责" },
+    { word: "祝福", cat: "易错结构", meaning: "祝愿人平安和幸福" },
+    { word: "补充", cat: "易错结构", meaning: "原来不足或有损失时增加一部分" },
+    { word: "渊博", cat: "易错结构", meaning: "学识深而且广" },
+    { word: "传染", cat: "易错结构", meaning: "病原体从有病的生物体侵入别的生物体" }
   ];
 
   let wordList = [];
-  // records 结构: { "尴尬": { status: 'mastered' | 'wrong', rightCount: 1, wrongCount: 0 } }
   let records = {};
   let currentList = [];
   let currentIndex = 0;
@@ -619,10 +712,13 @@
   let canvases = [];
   let isRevealed = false;
   let currentGridSize = 180;
-
-  // 智能判分模式下的多字追踪状态
   let quizCharIndex = 0;
   let quizTotalMistakes = 0;
+
+  // 词典缓存
+  let dictData = null;
+  let dictMap = null;
+  let currentFilteredDict = [];
 
   function init() {
     loadFromStorage();
@@ -631,9 +727,9 @@
   }
 
   function loadFromStorage() {
-    const savedWords = localStorage.getItem('tbwz_words_v4');
-    const savedRecords = localStorage.getItem('tbwz_records_v4');
-    const savedState = localStorage.getItem('tbwz_state_v4');
+    const savedWords = localStorage.getItem('tbwz_words_v5');
+    const savedRecords = localStorage.getItem('tbwz_records_v5');
+    const savedState = localStorage.getItem('tbwz_state_v5');
 
     wordList = savedWords ? JSON.parse(savedWords) : [...DEFAULT_WORDS];
     records = savedRecords ? JSON.parse(savedRecords) : {};
@@ -650,14 +746,14 @@
   }
 
   function saveToStorage() {
-    localStorage.setItem('tbwz_words_v4', JSON.stringify(wordList));
-    localStorage.setItem('tbwz_records_v4', JSON.stringify(records));
+    localStorage.setItem('tbwz_words_v5', JSON.stringify(wordList));
+    localStorage.setItem('tbwz_records_v5', JSON.stringify(records));
     saveStateOnly();
     updateStatsUI();
   }
 
   function saveStateOnly() {
-    localStorage.setItem('tbwz_state_v4', JSON.stringify({
+    localStorage.setItem('tbwz_state_v5', JSON.stringify({
       filter: currentFilter,
       index: currentIndex,
       mode: currentMode
@@ -726,17 +822,30 @@
     document.getElementById('status-text').textContent = "已打乱当前顺序";
   }
 
-  // 根据字数和屏幕宽度动态计算每个田字格尺寸
   function calcGridSize(charCount) {
     const containerWidth = Math.min(window.innerWidth - 64, 520);
     if (charCount === 1) return Math.min(240, containerWidth);
     if (charCount === 2) return Math.min(195, Math.floor((containerWidth - 12) / 2));
     if (charCount === 3) return Math.min(155, Math.floor((containerWidth - 24) / 3));
-    // 4个字及以上，手机端两行两列、电脑端一排显示
     if (window.innerWidth < 500) {
       return Math.floor((containerWidth - 12) / 2);
     }
     return Math.min(125, Math.floor((containerWidth - 36) / 4));
+  }
+
+  // 清洗释义，防止释义里出现目标词导致剧透
+  function sanitizeExplanation(word, rawExp) {
+    if (!rawExp) return '请根据拼音写出完整词语';
+    let cleaned = rawExp.replace(/\n+/g, '；').trim();
+    // 把释义中出现的完整目标词替换为空白括号
+    if (word && cleaned.includes(word)) {
+      cleaned = cleaned.split(word).join('【 】');
+    }
+    // 截断过长的古文引例，保持界面清爽
+    if (cleaned.length > 90) {
+      cleaned = cleaned.slice(0, 90) + '...';
+    }
+    return cleaned;
   }
 
   function renderCurrent() {
@@ -753,7 +862,7 @@
       charTagEl.className = "char-status-tag mastered";
       document.getElementById('category-tag').textContent = "提示";
       document.getElementById('pinyin-text').textContent = "暂无题目";
-      document.getElementById('meaning-text').textContent = "当前分类已空，可切换其他分类或导入新词";
+      document.getElementById('meaning-text').textContent = "当前分类已空，可点击右上角“词典挑词”补充新词";
       document.getElementById('progress-badge').textContent = "0 / 0";
       document.getElementById('action-buttons').innerHTML = '';
       return;
@@ -764,7 +873,6 @@
     const chars = [...item.word];
     const rec = records[item.word];
 
-    // 右上角记忆状态标记
     if (!rec) {
       charTagEl.textContent = "未练习";
       charTagEl.className = "char-status-tag";
@@ -779,15 +887,13 @@
     document.getElementById('progress-badge').textContent = `${currentIndex + 1} / ${currentList.length}`;
     document.getElementById('category-tag').textContent = `${item.cat || '日常词库'} · 共 ${chars.length} 字`;
 
-    // 只显示完整拼音与解释，完全不透字
     const { pinyin } = pinyinPro;
     document.getElementById('pinyin-text').textContent = pinyin(item.word, { toneType: 'symbol' });
-    document.getElementById('meaning-text').textContent = item.meaning || '请根据拼音写出完整词语';
+    document.getElementById('meaning-text').textContent = sanitizeExplanation(item.word, item.meaning);
 
     isRevealed = false;
     currentGridSize = calcGridSize(chars.length);
 
-    // 为每个字生成独立的田字格
     chars.forEach((ch, idx) => {
       const wrapper = document.createElement('div');
       wrapper.className = 'grid-wrapper';
@@ -819,6 +925,153 @@
       statusEl.textContent = `请先写第 1 个字（共 ${chars.length} 个字）`;
       startSequentialQuiz(chars);
       renderQuizButtons();
+    }
+  }
+
+  // ================= 词典挑词逻辑 (读取同级 ci.json) =================
+  async function ensureDictLoaded() {
+    if (dictData) return true;
+    const listEl = document.getElementById('dict-results-list');
+    const countEl = document.getElementById('dict-count-label');
+    try {
+      const res = await fetch('./ci.json');
+      if (!res.ok) throw new Error('无法读取 ci.json');
+      const raw = await res.json();
+      // 过滤掉非纯汉字或超过6字的过长词条
+      dictData = raw.filter(entry => entry.ci && /^[\u4e00-\u9fa5]{1,6}$/.test(entry.ci));
+      dictMap = new Map();
+      dictData.forEach(entry => {
+        if (!dictMap.has(entry.ci)) {
+          dictMap.set(entry.ci, entry.explanation || '');
+        }
+      });
+      countEl.textContent = `词典共 ${dictData.length} 词`;
+      return true;
+    } catch (err) {
+      listEl.innerHTML = `<div style="text-align:center; padding:30px 12px; color:var(--accent); font-size:13px;">
+        读取 ci.json 失败，请确认该文件已上传至仓库根目录且 Cloudflare 部署已完成。
+      </div>`;
+      return false;
+    }
+  }
+
+  async function openDictModal() {
+    document.getElementById('dict-modal').classList.add('open');
+    const ok = await ensureDictLoaded();
+    if (ok && currentFilteredDict.length === 0) {
+      pickRandomFromDict(20);
+    }
+  }
+
+  function filterDictResults() {
+    if (!dictData) return;
+    const kw = document.getElementById('dict-search-input').value.trim();
+    const lenFilter = parseInt(document.getElementById('dict-len-select').value, 10);
+
+    let matches = [];
+    for (let i = 0; i < dictData.length; i++) {
+      const item = dictData[i];
+      if (lenFilter > 0 && item.ci.length !== lenFilter) continue;
+      if (kw && !item.ci.includes(kw) && !(item.explanation && item.explanation.includes(kw))) continue;
+      matches.push(item);
+      if (matches.length >= 40) break; // 每次最多展示40条保持流畅
+    }
+
+    currentFilteredDict = matches;
+    renderDictList(matches, kw ? `匹配到前 ${matches.length} 条结果` : `展示 ${matches.length} 条词典词条`);
+  }
+
+  function pickRandomFromDict(count = 20) {
+    if (!dictData || dictData.length === 0) return;
+    const lenFilter = parseInt(document.getElementById('dict-len-select').value, 10);
+    const pool = lenFilter > 0 ? dictData.filter(d => d.ci.length === lenFilter) : dictData;
+    if (pool.length === 0) return;
+
+    const picked = [];
+    const used = new Set();
+    const maxTries = count * 5;
+    let tries = 0;
+    while (picked.length < count && tries < maxTries) {
+      tries++;
+      const idx = Math.floor(Math.random() * pool.length);
+      if (!used.has(idx)) {
+        used.add(idx);
+        picked.push(pool[idx]);
+      }
+    }
+    currentFilteredDict = picked;
+    renderDictList(picked, `已随机抽取 ${picked.length} 词`);
+  }
+
+  function renderDictList(items, labelText) {
+    const listEl = document.getElementById('dict-results-list');
+    document.getElementById('dict-count-label').textContent = labelText;
+
+    if (items.length === 0) {
+      listEl.innerHTML = `<div style="text-align:center; padding:40px 10px; color:var(--sub); font-size:13px;">未找到匹配的词语，换个关键词试试</div>`;
+      return;
+    }
+
+    const existingSet = new Set(wordList.map(w => w.word));
+    listEl.innerHTML = items.map((item, idx) => {
+      const added = existingSet.has(item.ci);
+      const exp = (item.explanation || '暂无释义').replace(/\n+/g, ' ');
+      return `
+        <div class="dict-item">
+          <div class="dict-item-info">
+            <div class="dict-item-word">${item.ci}</div>
+            <div class="dict-item-exp">${exp}</div>
+          </div>
+          <button class="btn ${added ? '' : 'btn-primary'}" ${added ? 'disabled' : ''} onclick="addDictItemByIndex(${idx}, this)">
+            ${added ? '已加入' : '+ 练习'}
+          </button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function addDictItemByIndex(idx, btnEl) {
+    const item = currentFilteredDict[idx];
+    if (!item) return;
+    const exists = wordList.some(w => w.word === item.ci);
+    if (!exists) {
+      wordList.unshift({
+        word: item.ci,
+        cat: '词典精选',
+        meaning: item.explanation || ''
+      });
+      saveToStorage();
+    }
+    if (btnEl) {
+      btnEl.textContent = '已加入';
+      btnEl.classList.remove('btn-primary');
+      btnEl.disabled = true;
+    }
+    document.getElementById('category-select').value = '词典精选';
+    onFilterChange();
+  }
+
+  function addAllVisibleDictItems() {
+    if (!currentFilteredDict.length) return;
+    let addedCount = 0;
+    [...currentFilteredDict].reverse().forEach(item => {
+      if (!wordList.some(w => w.word === item.ci)) {
+        wordList.unshift({
+          word: item.ci,
+          cat: '词典精选',
+          meaning: item.explanation || ''
+        });
+        addedCount++;
+      }
+    });
+    if (addedCount > 0) {
+      saveToStorage();
+      document.getElementById('category-select').value = '词典精选';
+      onFilterChange();
+      closeModal('dict-modal');
+      document.getElementById('status-text').textContent = `🎉 已从词典加入 ${addedCount} 个新词！`;
+    } else {
+      alert('当前列表中的词都已经加入过啦');
     }
   }
 
@@ -897,7 +1150,6 @@
         delayBetweenStrokes: 120
       });
       writers.push(w);
-      // 错开一点时间依次播放笔顺
       setTimeout(() => w.animateCharacter(), idx * 350);
     });
 
@@ -952,7 +1204,6 @@
   }
 
   function activateQuizForChar(chars, idx) {
-    // 高亮当前正在判分的格子
     chars.forEach((_, i) => {
       const box = document.getElementById(`grid-box-${i}`);
       if (box) box.classList.toggle('active-quiz-grid', i === idx);
@@ -976,7 +1227,6 @@
           statusEl.className = 'status-bar';
           activateQuizForChar(chars, idx + 1);
         } else {
-          // 整词全部写完
           document.getElementById(`grid-box-${idx}`)?.classList.remove('active-quiz-grid');
           const statusEl = document.getElementById('status-text');
           const passed = quizTotalMistakes <= 1;
@@ -1069,10 +1319,11 @@
     renderCurrent();
   }
 
-  function addSingleWord() {
+  async function addSingleWord() {
     const input = document.getElementById('custom-input');
     const raw = input.value.trim();
     if (!raw) return;
+    await ensureDictLoaded();
     const added = importWordsFromText(raw);
     input.value = '';
     if (added > 0) {
@@ -1091,8 +1342,9 @@
   }
   function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
-  function processBatchImport() {
+  async function processBatchImport() {
     const text = document.getElementById('batch-textarea').value;
+    await ensureDictLoaded();
     const added = importWordsFromText(text);
     document.getElementById('batch-textarea').value = '';
     closeModal('import-modal');
@@ -1105,7 +1357,6 @@
     }
   }
 
-  // 按完整词组导入，不再拆成单字
   function importWordsFromText(rawText) {
     const tokens = rawText.split(/[\s,，、；;。！？!?\n\r]+/).filter(Boolean);
     let addedCount = 0;
@@ -1115,10 +1366,12 @@
       if (!cleanWord || cleanWord.length > 8) return;
       const exists = wordList.some(item => item.word === cleanWord);
       if (!exists) {
+        // 如果词典已加载，自动从 ci.json 匹配标准释义
+        const dictExp = dictMap ? dictMap.get(cleanWord) : '';
         wordList.unshift({
           word: cleanWord,
           cat: '自定义',
-          meaning: '自定义导入词语'
+          meaning: dictExp || '自定义导入词语'
         });
         addedCount++;
       }
@@ -1156,9 +1409,9 @@
 
   function resetAllData() {
     if (confirm('确定清空所有练习记录和自定义词库，恢复初始状态吗？')) {
-      localStorage.removeItem('tbwz_words_v4');
-      localStorage.removeItem('tbwz_records_v4');
-      localStorage.removeItem('tbwz_state_v4');
+      localStorage.removeItem('tbwz_words_v5');
+      localStorage.removeItem('tbwz_records_v5');
+      localStorage.removeItem('tbwz_state_v5');
       currentFilter = 'all';
       currentIndex = 0;
       loadFromStorage();
