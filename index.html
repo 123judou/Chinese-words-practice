@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>提笔忘字 · 随手练</title>
+  <title>提笔忘字 · 日常用语随手练</title>
   <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.19.6/dist/index.js"></script>
+  <script src="https://unpkg.com/pinyin-pro@3.19.6/dist/index.js"></script>
   <style>
     :root {
       --bg: #f7f6f2;
@@ -253,15 +253,16 @@
     }
 
     .pinyin {
-      font-size: 26px;
+      font-size: 28px;
       color: var(--accent);
       font-weight: 600;
       letter-spacing: 2px;
       margin-bottom: 8px;
+      min-height: 36px;
     }
 
     .meaning {
-      font-size: 14px;
+      font-size: 15px;
       color: var(--text);
       line-height: 1.5;
       min-height: 22px;
@@ -554,9 +555,9 @@
 
 <div class="container">
   <header>
-    <h1>提笔忘字 <span class="badge" id="progress-badge">0 / 0</span></h1>
+    <h1>提笔忘字 <span class="badge" id="progress-badge">1 / 120</span></h1>
     <div class="header-actions">
-      <button class="btn btn-dict" onclick="openDictModal()">📖 词典筛词</button>
+      <button class="btn btn-dict" onclick="openDictModal()">📖 词典扩充</button>
       <button class="btn" onclick="openImportModal()">批量导入</button>
       <button class="btn" onclick="openBackupModal()">备份</button>
     </div>
@@ -564,7 +565,7 @@
 
   <div class="overall-progress">
     <div class="progress-top">
-      <span id="mastered-summary">已掌握：0 / 0 词</span>
+      <span id="mastered-summary">已掌握：0 / 120 词</span>
       <span id="mastered-percent">0%</span>
     </div>
     <div class="progress-bar-bg">
@@ -583,7 +584,13 @@
       <option value="unpracticed">未练习的新词 (0)</option>
       <option value="wrong">错题本 (0)</option>
       <option value="mastered">已掌握 (0)</option>
-      <option value="词典筛选">词典筛选</option>
+      <option value="日常情绪">日常情绪与状态</option>
+      <option value="身体动作">身体与动作</option>
+      <option value="居家生活">居家与生活物品</option>
+      <option value="饮食果蔬">饮食与果蔬</option>
+      <option value="社交职场">社交与书面高频</option>
+      <option value="高频成语">高频易错成语</option>
+      <option value="词典筛选">词典扩充</option>
       <option value="手动添加">手动添加</option>
     </select>
 
@@ -597,9 +604,9 @@
     <span class="char-status-tag" id="char-status-tag">未练习</span>
 
     <div class="prompt-area" id="prompt-area">
-      <div class="tag-line" id="category-tag">词典筛选</div>
-      <div class="pinyin" id="pinyin-text"></div>
-      <div class="meaning" id="meaning-text"></div>
+      <div class="tag-line" id="category-tag">日常情绪与状态</div>
+      <div class="pinyin" id="pinyin-text">gān gà</div>
+      <div class="meaning" id="meaning-text">处境困难，不好处理；神色、态度不自然</div>
     </div>
 
     <div class="grids-container" id="grids-container"></div>
@@ -614,27 +621,23 @@
   </div>
 </div>
 
-<!-- 词典筛词弹窗（自动过滤生僻古文词） -->
+<!-- 词典扩充弹窗 -->
 <div class="modal-mask" id="dict-modal">
   <div class="modal-box">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h3>📖 现代常用词筛选</h3>
+      <h3>📖 从《中华词语词典》搜索扩充</h3>
       <span id="dict-count-label" style="font-size:12px; color:var(--sub);">准备加载词典...</span>
     </div>
     <div class="dict-filters">
-      <input type="text" id="dict-search-input" placeholder="搜汉字或释义（留空全词库）" oninput="filterDictResults()" />
+      <input type="text" id="dict-search-input" placeholder="输入关键词搜索（如：笑、病、食物）" oninput="filterDictResults()" />
       <select id="dict-len-select" onchange="filterDictResults()">
         <option value="0">不限字数</option>
         <option value="2" selected>2字词</option>
         <option value="3">3字词</option>
         <option value="4">4字词</option>
       </select>
-      <select id="dict-level-select" onchange="filterDictResults()" title="过滤掉文言僻词和方言">
-        <option value="common" selected>仅常用现代词</option>
-        <option value="all">全部词典词</option>
-      </select>
       <div class="count-picker">
-        <input type="number" id="dict-pick-count" value="20" min="1" max="500" onchange="filterDictResults()" />
+        <input type="number" id="dict-pick-count" value="15" min="1" max="500" onchange="filterDictResults()" />
         <span style="font-size:12px; color:var(--sub);">个</span>
         <button class="btn btn-primary" style="padding:4px 8px; font-size:12px;" onclick="pickRandomFromDict()">🎲 随机抽取</button>
       </div>
@@ -680,19 +683,140 @@
 </div>
 
 <script>
-  // 高频日常起步词（确保首次打开平板/手机立刻看到田字格可写）
-  const STARTER_WORDS = [
-    { word: "尴尬", cat: "词典筛选", meaning: "处境困难，不好处理；神色、态度不自然" },
-    { word: "喷嚏", cat: "词典筛选", meaning: "鼻黏膜受刺激引起的急剧吸气和喷气" },
-    { word: "咳嗽", cat: "词典筛选", meaning: "呼吸道受刺激而突然向外冲气发声" },
-    { word: "钥匙", cat: "词典筛选", meaning: "开锁的工具，或比喻解决问题的方法" },
-    { word: "犹豫", cat: "词典筛选", meaning: "拿不定主意" }
-  ];
+  // 120个高频日常用语精选库（自带准确拼音，离线/平板弱网也能100%秒出拼音）
+  const DAILY_WORDS = [
+    // 日常情绪与状态
+    { word: "尴尬", py: "gān gà", cat: "日常情绪", meaning: "处境困难，不好处理；神色、态度不自然" },
+    { word: "犹豫", py: "yóu yù", cat: "日常情绪", meaning: "拿不定主意" },
+    { word: "委屈", py: "wěi qu", cat: "日常情绪", meaning: "受到不应该有的指责或待遇，心里难过" },
+    { word: "羡慕", py: "xiàn mù", cat: "日常情绪", meaning: "看见别人有某种长处、好处或有利条件而希望自己也有" },
+    { word: "嫉妒", py: "jí dù", cat: "日常情绪", meaning: "对才能、名誉、地位或境遇等比自己好的人心怀怨恨" },
+    { word: "撒娇", py: "sā jiāo", cat: "日常情绪", meaning: "仗着被人宠爱而故意作态" },
+    { word: "敷衍", py: "fū yǎn", cat: "日常情绪", meaning: "做事不负责或待人不恳切，只做表面上的应付" },
+    { word: "纠结", py: "jiū jié", cat: "日常情绪", meaning: "心里烦乱，拿不定主意" },
+    { word: "崩溃", py: "bēng kuì", cat: "日常情绪", meaning: "彻底破坏垮台；情绪彻底失控" },
+    { word: "惬意", py: "qiè yì", cat: "日常情绪", meaning: "满意；称心；舒服" },
+    { word: "狼狈", py: "láng bèi", cat: "日常情绪", meaning: "形容困苦或受窘的样子" },
+    { word: "惭愧", py: "cán kuì", cat: "日常情绪", meaning: "因有缺点、错误或未能尽责而感到不安或羞耻" },
+    { word: "松懈", py: "sōng xiè", cat: "日常情绪", meaning: "注意力不集中，做事不抓紧" },
+    { word: "慵懒", py: "yōng lǎn", cat: "日常情绪", meaning: "困倦懒惰，无精打采" },
+    { word: "烦躁", py: "fán zào", cat: "日常情绪", meaning: "烦闷急躁" },
+    { word: "懊恼", py: "ào nǎo", cat: "日常情绪", meaning: "心里别扭；烦恼；悔恨" },
+    { word: "豁达", py: "huò dá", cat: "日常情绪", meaning: "性格开朗；气量大" },
+    { word: "腼腆", py: "miǎn tiǎn", cat: "日常情绪", meaning: "因怕生或害羞而神情不自然" },
+    { word: "执拗", py: "zhí niù", cat: "日常情绪", meaning: "固执任性，不听从别人的意见" },
+    { word: "倔强", py: "jué jiàng", cat: "日常情绪", meaning: "（性情）刚强不屈" },
 
-  // 现代常用汉字高频库（用于过滤掉古文生僻词）
-  const COMMON_CHARS_STR = "的一是在不了有和人这中大为上个国我以要他时来用们生到作地于出就分对成会可主发年动同工也能下过子说产种面而方后多定行学法所民得经十三之进着等部度家电力里如水化高自二理起小物现实加量都两体制机当使点从业本去把性好应开它合还因由其些然前外天政四日那社义事平形相全表间样与关各重新线内数正心反你明看原又么利比或但质气第向道命此变条只没结解问意建月公无系军很情者最立代想已通并提直题党程展五果料象员革位入常文总次品式活设及管特件长求老头基资边流路级少图山统接知较将组见计别她手角期根论运农指几九区强放决西被干做必战先回则任取据处队南给色光门即保治北造百规热领七海口东导器压志世金增争济阶油思术极交受联什认六共权收证改清己美再采转更单风切打白教速花带安场身车例真务具万每目至达走积示议声报斗完类八离华名确才科张信马节话米整空元况今集温传土许步群广石记需段研界拉林律叫且究观越织装影算低持音众书布复容儿须际商非验连断深难近矿千周委素技备半办青省列习响约支般史感劳便团往酸历市克何除消构府称太准精值号率族维划选标写存候毛亲快效斯院查江型眼王按格养易置派层片始却专状育厂京识适属圆包火住调满县局照参红细引听该铁价严龙飞" +
-    "尴尬喷嚏咳嗽钥匙犹豫膝盖油腻脾气胃口肺腑喉咙胳膊脊椎骨髓狼狈惭愧松懈寒暄殷勤揣摩伺候执拗簸箕扫帚筷子大蒜生姜米醋酱油袜子裤子枕头被褥窗户抽屉衣柜饕餮鼎祟厉筹墨滥竽釜辙辕鹜炙脍掣戛寥蔼赢凹凸虐临冠冤祝福补充渊博传染薄落差强处称载给露埋咽宿模削哄挣着折嚼屏巷稽裨殷淖靡翘创熨帖揣伺煞撮拗勾鲜应纤粘黏瘠藉慰蕴鉴";
-  const COMMON_CHAR_SET = new Set([...COMMON_CHARS_STR]);
+    // 身体与动作
+    { word: "喷嚏", py: "pēn tì", cat: "身体动作", meaning: "鼻黏膜受刺激引起的急剧吸气和喷气" },
+    { word: "咳嗽", py: "ké sou", cat: "身体动作", meaning: "呼吸道受刺激而突然向外冲气发声" },
+    { word: "膝盖", py: "xī gài", cat: "身体动作", meaning: "大腿和小腿相连的关节前部" },
+    { word: "胳膊", py: "gē bo", cat: "身体动作", meaning: "肩以下手腕以上的部分" },
+    { word: "喉咙", py: "hóu lóng", cat: "身体动作", meaning: "咽喉，泛指喉部" },
+    { word: "脊椎", py: "jǐ zhuī", cat: "身体动作", meaning: "人和动物背上中间的柱状骨头" },
+    { word: "胃口", py: "wèi kǒu", cat: "身体动作", meaning: "食欲；对事物或活动的兴趣" },
+    { word: "脾气", py: "pí qi", cat: "身体动作", meaning: "性情；容易发怒的习性" },
+    { word: "抽筋", py: "chōu jīn", cat: "身体动作", meaning: "肌肉不自主地强直收缩，引起疼痛" },
+    { word: "发烧", py: "fā shāo", cat: "身体动作", meaning: "体温升高超过正常标准" },
+    { word: "失眠", py: "shī mián", cat: "身体动作", meaning: "夜晚睡不着或容易醒来，不能正常睡眠" },
+    { word: "眨眼", py: "zhǎ yǎn", cat: "身体动作", meaning: "眼睛很快地一闭一开" },
+    { word: "鞠躬", py: "jū gōng", cat: "身体动作", meaning: "弯身行礼" },
+    { word: "抚摸", py: "fǔ mō", cat: "身体动作", meaning: "用手轻轻地按着并来回移动" },
+    { word: "挣扎", py: "zhēng zhá", cat: "身体动作", meaning: "用力支撑或摆脱" },
+    { word: "咀嚼", py: "jǔ jué", cat: "身体动作", meaning: "用牙齿磨碎食物；比喻对事物反复体会" },
+    { word: "吞咽", py: "tūn yàn", cat: "身体动作", meaning: "不嚼或不细嚼而咽入" },
+    { word: "颤抖", py: "chàn dǒu", cat: "身体动作", meaning: "哆嗦，发抖" },
+    { word: "蹒跚", py: "pán shān", cat: "身体动作", meaning: "腿脚不灵便，走路缓慢、摇摆的样子" },
+    { word: "落枕", py: "lào zhěn", cat: "身体动作", meaning: "睡眠时因枕头不合适或受凉而引起的颈部疼痛" },
+
+    // 居家与生活物品
+    { word: "钥匙", py: "yào shi", cat: "居家生活", meaning: "开锁的工具，或比喻解决问题的方法" },
+    { word: "抽屉", py: "chōu ti", cat: "居家生活", meaning: "桌子、柜子等家具中可抽动的匣子" },
+    { word: "枕头", py: "zhěn tou", cat: "居家生活", meaning: "躺着时垫在头下的东西" },
+    { word: "被褥", py: "bèi rù", cat: "居家生活", meaning: "被子和褥子的统称" },
+    { word: "窗户", py: "chuāng hu", cat: "居家生活", meaning: "房屋通风透光的装置" },
+    { word: "窗帘", py: "chuāng lián", cat: "居家生活", meaning: "遮蔽窗户的布" },
+    { word: "扫帚", py: "sào zhou", cat: "居家生活", meaning: "扫地的工具" },
+    { word: "簸箕", py: "bò ji", cat: "居家生活", meaning: "扬米去糠或收垃圾的器具" },
+    { word: "拖把", py: "tuō bǎ", cat: "居家生活", meaning: "擦洗地板的工具" },
+    { word: "垃圾", py: "lā jī", cat: "居家生活", meaning: "脏土或扔掉的破烂东西" },
+    { word: "插座", py: "chā zuò", cat: "居家生活", meaning: "供插头插入以接通电路的装置" },
+    { word: "衣柜", py: "yī guì", cat: "居家生活", meaning: "收藏衣物的立式家具" },
+    { word: "袜子", py: "wà zi", cat: "居家生活", meaning: "穿在脚上的针织品" },
+    { word: "裤子", py: "kù zi", cat: "居家生活", meaning: "穿在腰腿间的衣物" },
+    { word: "皮鞋", py: "pí xié", cat: "居家生活", meaning: "用皮革做帮子的鞋" },
+    { word: "雨伞", py: "yǔ sǎn", cat: "居家生活", meaning: "挡雨或遮太阳的用具" },
+    { word: "熨斗", py: "yùn dǒu", cat: "居家生活", meaning: "用来烫平衣服的金属器具" },
+    { word: "蜡烛", py: "là zhú", cat: "居家生活", meaning: "用蜡或油脂制成的照明用品" },
+    { word: "镜子", py: "jìng zi", cat: "居家生活", meaning: "表面光滑、能反射出人或物像的器具" },
+    { word: "牙刷", py: "yá shuā", cat: "居家生活", meaning: "刷牙用的小刷子" },
+
+    // 饮食与果蔬
+    { word: "饺子", py: "jiǎo zi", cat: "饮食果蔬", meaning: "半圆形的有馅面食" },
+    { word: "馄饨", py: "hún tun", cat: "饮食果蔬", meaning: "用薄面皮包肉馅煮熟的食物，通常带汤" },
+    { word: "馒头", py: "mán tou", cat: "饮食果蔬", meaning: "用发酵的面粉蒸成的食品，一般没有馅" },
+    { word: "大蒜", py: "dà suàn", cat: "饮食果蔬", meaning: "常见辛辣调味植物" },
+    { word: "生姜", py: "shēng jiāng", cat: "饮食果蔬", meaning: "常见块茎调味植物" },
+    { word: "米醋", py: "mǐ cù", cat: "饮食果蔬", meaning: "用粮食酿造的酸味调味品" },
+    { word: "酱油", py: "jiàng yóu", cat: "饮食果蔬", meaning: "用大豆等酿造的褐色咸味调味汁" },
+    { word: "油腻", py: "yóu nì", cat: "饮食果蔬", meaning: "食物中油脂过多；因过多而厌烦" },
+    { word: "蘑菇", py: "mó gu", cat: "饮食果蔬", meaning: "常见的可食用大型真菌" },
+    { word: "葡萄", py: "pú tao", cat: "饮食果蔬", meaning: "成串生长的常见多汁水果" },
+    { word: "菠萝", py: "bō luó", cat: "饮食果蔬", meaning: "热带常见水果，果肉多汁酸甜" },
+    { word: "猕猴桃", py: "mí hóu táo", cat: "饮食果蔬", meaning: "表皮有褐色绒毛、果肉翠绿的水果" },
+    { word: "柠檬", py: "níng méng", cat: "饮食果蔬", meaning: "果皮黄色、味道极酸的柑橘类水果" },
+    { word: "草莓", py: "cǎo méi", cat: "饮食果蔬", meaning: "红色心形、表面有细小种子的水果" },
+    { word: "荔枝", py: "lì zhī", cat: "饮食果蔬", meaning: "外壳有瘤状突起、果肉白色半透明的水果" },
+    { word: "香蕉", py: "xiāng jiāo", cat: "饮食果蔬", meaning: "长条弯曲、黄皮白肉的热带水果" },
+    { word: "黄瓜", py: "huáng guā", cat: "饮食果蔬", meaning: "表皮绿色有刺的常见蔬菜" },
+    { word: "茄子", py: "qié zi", cat: "饮食果蔬", meaning: "常见紫色或绿色长条形蔬菜" },
+    { word: "番茄", py: "fān qié", cat: "饮食果蔬", meaning: "西红柿" },
+    { word: "麻辣烫", py: "má là tàng", cat: "饮食果蔬", meaning: "把各种食材放进麻辣汤底中煮熟的小吃" },
+
+    // 社交与书面高频
+    { word: "寒暄", py: "hán xuān", cat: "社交职场", meaning: "见面时谈天气冷暖之类的应酬话" },
+    { word: "殷勤", py: "yīn qín", cat: "社交职场", meaning: "热情而周到" },
+    { word: "揣摩", py: "chuǎi mó", cat: "社交职场", meaning: "反复思考推求" },
+    { word: "妥帖", py: "tuǒ tiē", cat: "社交职场", meaning: "恰当，十分合适" },
+    { word: "繁琐", py: "fán suǒ", cat: "社交职场", meaning: "繁杂琐碎" },
+    { word: "疏忽", py: "shū hu", cat: "社交职场", meaning: "粗心大意，忽略" },
+    { word: "抱歉", py: "bào qiàn", cat: "社交职场", meaning: "心中不安，觉得对不住别人" },
+    { word: "荣幸", py: "róng xìng", cat: "社交职场", meaning: "光荣而幸运" },
+    { word: "光临", py: "guāng lín", cat: "社交职场", meaning: "敬辞，称宾客来到" },
+    { word: "输赢", py: "shū yíng", cat: "社交职场", meaning: "胜负" },
+    { word: "冠军", py: "guàn jūn", cat: "社交职场", meaning: "体育等各种比赛中的第一名" },
+    { word: "冤枉", py: "yuān wang", cat: "社交职场", meaning: "受到不公平的待遇或无端指责" },
+    { word: "祝福", py: "zhù fú", cat: "社交职场", meaning: "祝愿人平安和幸福" },
+    { word: "补充", py: "bǔ chōng", cat: "社交职场", meaning: "原来不足或有损失时增加一部分" },
+    { word: "渊博", py: "yuān bó", cat: "社交职场", meaning: "学识深而且广" },
+    { word: "传染", py: "chuán rǎn", cat: "社交职场", meaning: "病原体从有病的生物体侵入别的生物体" },
+    { word: "安慰", py: "ān wèi", cat: "社交职场", meaning: "使心情安适" },
+    { word: "鼓励", py: "gǔ lì", cat: "社交职场", meaning: "激发；勉励" },
+    { word: "熟悉", py: "shú xī", cat: "社交职场", meaning: "知道得很清楚" },
+    { word: "纯粹", py: "chún cuì", cat: "社交职场", meaning: "不掺杂别的成分" },
+
+    // 高频易错成语
+    { word: "迫不及待", py: "pò bù jí dài", cat: "高频成语", meaning: "急迫得不能再等待" },
+    { word: "再接再厉", py: "zài jiē zài lì", cat: "高频成语", meaning: "一次又一次地继续努力" },
+    { word: "一筹莫展", py: "yī chóu mò zhǎn", cat: "高频成语", meaning: "一点计策也施展不出，形容毫无办法" },
+    { word: "鬼鬼祟祟", py: "guǐ guǐ suì suì", cat: "高频成语", meaning: "形容行动偷偷摸摸，不光明正大" },
+    { word: "随遇而安", py: "suí yù ér ān", cat: "高频成语", meaning: "能顺应环境，在任何境遇中都能满足" },
+    { word: "莫名其妙", py: "mò míng qí miào", cat: "高频成语", meaning: "没有人能说明它的奥妙，表示事情很奇怪" },
+    { word: "理所当然", py: "lǐ suǒ dāng rán", cat: "高频成语", meaning: "按道理应当这样" },
+    { word: "不可思议", py: "bù kě sī yì", cat: "高频成语", meaning: "原有神秘奥妙的意思，现多指无法想象，难以理解" },
+    { word: "心旷神怡", py: "xīn kuàng shén yí", cat: "高频成语", meaning: "心情舒畅，精神愉快" },
+    { word: "无微不至", py: "wú wēi bù zhì", cat: "高频成语", meaning: "没有一处细微的地方不照顾到，形容关怀备至" },
+    { word: "雪中送炭", py: "xuě zhōng sòng tàn", cat: "高频成语", meaning: "在下雪天给人送炭取暖，比喻在别人急需时给以物质或精神上的帮助" },
+    { word: "画蛇添足", py: "huà shé tiān zú", cat: "高频成语", meaning: "画蛇时给蛇添上脚，比喻做了多余的事，非但无益，反而不合适" },
+    { word: "守株待兔", py: "shǒu zhū dài tù", cat: "高频成语", meaning: "原比喻希图不经过努力而得到成功的侥幸心理" },
+    { word: "自相矛盾", py: "zì xiāng máo dùn", cat: "高频成语", meaning: "比喻自己说话做事前后抵触" },
+    { word: "井底之蛙", py: "jǐng dǐ zhī wā", cat: "高频成语", meaning: "井底的蛙只能看到井口那么大的一块天，比喻见识狭窄的人" },
+    { word: "对牛弹琴", py: "duì niú tán qín", cat: "高频成语", meaning: "讥笑听话的人不懂对方说得是什么，也比喻对蠢人讲道理" },
+    { word: "亡羊补牢", py: "wáng yáng bǔ láo", cat: "高频成语", meaning: "羊逃跑了再去修补羊圈，还不算晚，比喻出了问题以后想办法补救" },
+    { word: "掩耳盗铃", py: "yǎn ěr dào líng", cat: "高频成语", meaning: "捂住耳朵偷铃铛，比喻自己欺骗自己" },
+    { word: "滥竽充数", py: "làn yú chōng shù", cat: "高频成语", meaning: "没有真才实学的人混在行家里面充数" },
+    { word: "南辕北辙", py: "nán yuán běi zhé", cat: "高频成语", meaning: "行动和目的正好相反" }
+  ];
 
   let wordList = [];
   let records = {};
@@ -716,19 +840,17 @@
     loadFromStorage();
     document.getElementById('category-select').value = currentFilter;
     applyFilter(true);
-    // 监听平板旋转屏幕或窗口大小改变，自动重绘田字格
     window.addEventListener('resize', () => {
       if (currentList.length > 0) renderCurrent();
     });
   }
 
   function loadFromStorage() {
-    const savedWords = localStorage.getItem('tbwz_words_v7');
-    const savedRecords = localStorage.getItem('tbwz_records_v7');
-    const savedState = localStorage.getItem('tbwz_state_v7');
+    const savedWords = localStorage.getItem('tbwz_words_v8');
+    const savedRecords = localStorage.getItem('tbwz_records_v8');
+    const savedState = localStorage.getItem('tbwz_state_v8');
 
-    // 如果是第一次打开（没有任何存储记录），给5个日常高频词作为起步演示，确保田字格立刻可见
-    wordList = savedWords ? JSON.parse(savedWords) : [...STARTER_WORDS];
+    wordList = savedWords ? JSON.parse(savedWords) : [...DAILY_WORDS];
     records = savedRecords ? JSON.parse(savedRecords) : {};
 
     if (savedState) {
@@ -743,14 +865,14 @@
   }
 
   function saveToStorage() {
-    localStorage.setItem('tbwz_words_v7', JSON.stringify(wordList));
-    localStorage.setItem('tbwz_records_v7', JSON.stringify(records));
+    localStorage.setItem('tbwz_words_v8', JSON.stringify(wordList));
+    localStorage.setItem('tbwz_records_v8', JSON.stringify(records));
     saveStateOnly();
     updateStatsUI();
   }
 
   function saveStateOnly() {
-    localStorage.setItem('tbwz_state_v7', JSON.stringify({
+    localStorage.setItem('tbwz_state_v8', JSON.stringify({
       filter: currentFilter,
       index: currentIndex,
       mode: currentMode
@@ -819,7 +941,6 @@
     document.getElementById('status-text').textContent = "已打乱当前顺序";
   }
 
-  // 兼容手机、平板竖屏/横屏、电脑的自适应田字格尺寸计算
   function calcGridSize(charCount) {
     const screenW = document.documentElement.clientWidth || window.innerWidth || 375;
     const containerWidth = Math.max(260, Math.min(screenW - 56, 580));
@@ -827,7 +948,6 @@
     if (charCount === 1) return Math.min(240, containerWidth);
     if (charCount === 2) return Math.max(120, Math.min(210, Math.floor((containerWidth - 16) / 2)));
     if (charCount === 3) return Math.max(95, Math.min(165, Math.floor((containerWidth - 28) / 3)));
-    // 4字及以上：屏幕较窄时按每行2个排布，平板/电脑宽屏按一排4个排布
     if (containerWidth < 520) {
       return Math.max(110, Math.floor((containerWidth - 16) / 2));
     }
@@ -844,6 +964,18 @@
       cleaned = cleaned.slice(0, 90) + '...';
     }
     return cleaned;
+  }
+
+  function getWordPinyin(item) {
+    // 1. 优先使用自带的离线准确拼音（100%秒显示，不受平板网络影响）
+    if (item.py) return item.py;
+    // 2. 否则尝试调用拼音库动态生成
+    if (window.pinyinPro && typeof window.pinyinPro.pinyin === 'function') {
+      try {
+        return window.pinyinPro.pinyin(item.word, { toneType: 'symbol' });
+      } catch (e) {}
+    }
+    return '';
   }
 
   function renderCurrent() {
@@ -863,8 +995,8 @@
       document.getElementById('progress-badge').textContent = "0 / 0";
       gridsContainer.innerHTML = `
         <div class="empty-guide">
-          <p>当前分类下没有词语。<br>点击下方按钮从词典中筛选现代常用词加入练习。</p>
-          <button class="btn btn-primary" style="padding:10px 20px; font-size:15px;" onclick="openDictModal()">📖 打开词典筛词</button>
+          <p>当前分类下没有词语。<br>你可以切换回“全部词库”继续练习，或从词典中搜索新词。</p>
+          <button class="btn btn-primary" style="padding:10px 20px; font-size:15px;" onclick="document.getElementById('category-select').value='all'; onFilterChange();">返回全部词库</button>
         </div>
       `;
       statusEl.textContent = "";
@@ -890,13 +1022,10 @@
     }
 
     document.getElementById('progress-badge').textContent = `${currentIndex + 1} / ${currentList.length}`;
-    document.getElementById('category-tag').textContent = `${item.cat || '词典筛选'} · 共 ${chars.length} 字`;
+    document.getElementById('category-tag').textContent = `${item.cat || '日常用语'} · 共 ${chars.length} 字`;
 
-    if (window.pinyinPro) {
-      document.getElementById('pinyin-text').textContent = window.pinyinPro.pinyin(item.word, { toneType: 'symbol' });
-    } else {
-      document.getElementById('pinyin-text').textContent = "请按释义书写";
-    }
+    const pyText = getWordPinyin(item);
+    document.getElementById('pinyin-text').textContent = pyText || `共 ${chars.length} 字词语`;
     document.getElementById('meaning-text').textContent = sanitizeExplanation(item.word, item.meaning);
 
     isRevealed = false;
@@ -936,23 +1065,7 @@
     }
   }
 
-  // ================= 常用词过滤规则 =================
-  const ARCHAIC_KEYWORDS = /〈书〉|〈方〉|〈古〉|古同|古称|古国名|古地名|古县名|古州名|古水名|古山名|姓氏|复姓|见“|见'|同“|同'|亦作“|亦作'|通“|通'/;
-
-  function isCommonModernWord(entry) {
-    const word = entry.ci;
-    const exp = entry.explanation || '';
-    // 1. 必须所有字都在现代常用汉字集合内
-    for (const ch of word) {
-      if (!COMMON_CHAR_SET.has(ch)) return false;
-    }
-    // 2. 释义不能是纯文言/古地名/通假字引用
-    if (!exp || exp.length < 4) return false;
-    if (ARCHAIC_KEYWORDS.test(exp)) return false;
-    return true;
-  }
-
-  // ================= 词典筛词逻辑 =================
+  // ================= 词典扩充逻辑（读取 ci.json） =================
   function getExistingWordsSet() {
     const set = new Set(wordList.map(w => w.word));
     Object.keys(records).forEach(w => set.add(w));
@@ -962,7 +1075,7 @@
   function getDesiredPickCount() {
     const input = document.getElementById('dict-pick-count');
     let val = parseInt(input.value, 10);
-    if (isNaN(val) || val < 1) val = 20;
+    if (isNaN(val) || val < 1) val = 15;
     if (val > 500) val = 500;
     input.value = val;
     return val;
@@ -980,7 +1093,6 @@
       for (const entry of raw) {
         if (entry.ci && /^[\u4e00-\u9fa5]{1,6}$/.test(entry.ci) && !seen.has(entry.ci)) {
           seen.add(entry.ci);
-          entry.isCommon = isCommonModernWord(entry);
           dictData.push(entry);
         }
       }
@@ -989,7 +1101,7 @@
       return true;
     } catch (err) {
       listEl.innerHTML = `<div style="text-align:center; padding:30px 12px; color:var(--accent); font-size:13px;">
-        读取 ci.json 失败，请确认该文件已上传至仓库根目录且 Cloudflare Pages 部署已完成。
+        读取 ci.json 失败，可直接使用内置的 120 个日常用语词库或手动添加词语。
       </div>`;
       return false;
     }
@@ -999,19 +1111,17 @@
     document.getElementById('dict-modal').classList.add('open');
     const ok = await ensureDictLoaded();
     if (ok) {
-      pickRandomFromDict();
+      filterDictResults();
     }
   }
 
   function getFilteredPool() {
     const kw = document.getElementById('dict-search-input').value.trim();
     const lenFilter = parseInt(document.getElementById('dict-len-select').value, 10);
-    const levelFilter = document.getElementById('dict-level-select').value;
     const existingSet = getExistingWordsSet();
 
     return dictData.filter(d => {
       if (existingSet.has(d.ci)) return false;
-      if (levelFilter === 'common' && !d.isCommon) return false;
       if (lenFilter > 0 && d.ci.length !== lenFilter) return false;
       if (kw && !d.ci.includes(kw) && !(d.explanation && d.explanation.includes(kw))) return false;
       return true;
@@ -1025,7 +1135,7 @@
     const matches = pool.slice(0, limit);
 
     currentFilteredDict = matches;
-    renderDictList(matches, `筛选出 ${pool.length} 个未练新词，展示前 ${matches.length} 个`);
+    renderDictList(matches, `匹配到 ${pool.length} 个未加新词，展示前 ${matches.length} 个`);
   }
 
   function pickRandomFromDict() {
@@ -1035,7 +1145,7 @@
 
     if (pool.length === 0) {
       currentFilteredDict = [];
-      renderDictList([], '符合条件的未练新词已全部抽完');
+      renderDictList([], '符合条件的未加新词已全部抽完');
       return;
     }
 
@@ -1047,7 +1157,7 @@
 
     const picked = pool.slice(0, takeCount);
     currentFilteredDict = picked;
-    renderDictList(picked, `从 ${pool.length} 个常用新词中随机抽取 ${picked.length} 词`);
+    renderDictList(picked, `从 ${pool.length} 个未加新词中随机抽取 ${picked.length} 词`);
   }
 
   function renderDictList(items, labelText) {
@@ -1079,12 +1189,22 @@
     }).join('');
   }
 
+  function generatePinyinSafe(word) {
+    if (window.pinyinPro && typeof window.pinyinPro.pinyin === 'function') {
+      try {
+        return window.pinyinPro.pinyin(word, { toneType: 'symbol' });
+      } catch (e) {}
+    }
+    return '';
+  }
+
   function addDictItemByIndex(idx, btnEl) {
     const item = currentFilteredDict[idx];
     if (!item) return;
     if (!getExistingWordsSet().has(item.ci)) {
       wordList.unshift({
         word: item.ci,
+        py: generatePinyinSafe(item.ci),
         cat: '词典筛选',
         meaning: item.explanation || ''
       });
@@ -1109,6 +1229,7 @@
         existingSet.add(item.ci);
         wordList.unshift({
           word: item.ci,
+          py: generatePinyinSafe(item.ci),
           cat: '词典筛选',
           meaning: item.explanation || ''
         });
@@ -1127,7 +1248,7 @@
     }
   }
 
-  // ================= 模式 A：整词盲写自由手写（兼容鼠标 + Apple Pencil + 手指触控） =================
+  // ================= 模式 A：整词盲写自由手写 =================
   function bindCanvasEvents(cvs) {
     const ctx = cvs.getContext('2d');
     ctx.lineWidth = Math.max(4, Math.round(currentGridSize / 35));
@@ -1429,6 +1550,7 @@
         const dictExp = dictMap ? dictMap.get(cleanWord) : '';
         wordList.unshift({
           word: cleanWord,
+          py: generatePinyinSafe(cleanWord),
           cat: '手动添加',
           meaning: dictExp || '自定义导入词语'
         });
@@ -1467,10 +1589,10 @@
   }
 
   function resetAllData() {
-    if (confirm('确定清空所有练习记录并恢复初始状态吗？')) {
-      localStorage.removeItem('tbwz_words_v7');
-      localStorage.removeItem('tbwz_records_v7');
-      localStorage.removeItem('tbwz_state_v7');
+    if (confirm('确定清空所有练习记录并恢复 120 个日常用语词库吗？')) {
+      localStorage.removeItem('tbwz_words_v8');
+      localStorage.removeItem('tbwz_records_v8');
+      localStorage.removeItem('tbwz_state_v8');
       currentFilter = 'all';
       currentIndex = 0;
       loadFromStorage();
