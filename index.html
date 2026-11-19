@@ -43,7 +43,7 @@
       max-width: 640px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 11px;
     }
 
     header {
@@ -78,14 +78,30 @@
       align-items: center;
     }
 
+    /* 两行极简使用说明 */
+    .usage-guide {
+      background: #f1efe9;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: var(--sub);
+      line-height: 1.55;
+    }
+
+    .usage-guide strong {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* 进度与练习时间统计栏 */
     .overall-progress {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 8px 12px;
+      padding: 9px 12px;
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 6px;
       font-size: 12px;
       color: var(--sub);
     }
@@ -93,6 +109,25 @@
     .progress-top {
       display: flex;
       justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .time-stats {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .time-pill {
+      background: var(--accent-light);
+      color: var(--accent);
+      padding: 1px 7px;
+      border-radius: 6px;
+      font-weight: 500;
     }
 
     .progress-bar-bg {
@@ -530,10 +565,20 @@
     </div>
   </header>
 
+  <!-- 1. 两行极简使用说明 -->
+  <div class="usage-guide">
+    <strong>玩法说明：</strong>① 根据拼音与释义在田字格内手写完整词语（写错可点“撤回一笔”）；<br>
+    ② 写完点击<strong>「核对答案」</strong>叠加红字对比笔顺与字形，自评对错后自动归入已掌握或错题本。
+  </div>
+
+  <!-- 2. 进度与练习时间记录 -->
   <div class="overall-progress">
     <div class="progress-top">
-      <span id="mastered-summary">已掌握：0 / 120 词</span>
-      <span id="mastered-percent">0%</span>
+      <span id="mastered-summary">已掌握：0 / 120 词 (0%)</span>
+      <div class="time-stats">
+        <span>今日练习 <span class="time-pill" id="today-time-text">0分00秒</span></span>
+        <span style="color:var(--sub);" id="total-time-text">累计 0分钟</span>
+      </div>
     </div>
     <div class="progress-bar-bg">
       <div class="progress-bar-fill" id="mastered-bar"></div>
@@ -583,7 +628,7 @@
   </div>
 </div>
 
-<!-- 词库抽词弹窗（优先筛选 1000.txt 并自动匹配 ci.json 释义） -->
+<!-- 词库抽词弹窗 -->
 <div class="modal-mask" id="dict-modal">
   <div class="modal-box">
     <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -635,7 +680,7 @@
 <div class="modal-mask" id="backup-modal">
   <div class="modal-box">
     <h3>学习记录备份与同步</h3>
-    <p>练习记录保存在当前设备的浏览器中。如需换设备，可复制下方数据保存或粘贴恢复。</p>
+    <p>练习记录与练习时长保存在当前设备的浏览器中。如需换设备，可复制下方数据保存或粘贴恢复。</p>
     <textarea id="backup-textarea" placeholder="点击下方“导出记录”生成备份代码，或粘贴已有代码点击“恢复记录”"></textarea>
     <div class="modal-footer" style="justify-content: space-between;">
       <button class="link-btn" onclick="resetAllData()">清空重置</button>
@@ -785,11 +830,19 @@
 
   let writers = [];
   let canvases = [];
-  let strokeHistory = []; // 笔画历史栈，支持精准“撤回一笔”
+  let strokeHistory = [];
   let isRevealed = false;
   let currentGridSize = 180;
 
-  // 外部文件缓存（ci.json 与 1000.txt）
+  // 练习时间记录状态
+  let timeStats = {
+    todayDate: '',
+    todaySeconds: 0,
+    totalSeconds: 0
+  };
+  let timerInterval = null;
+
+  // 外部文件缓存
   let ciData = null;
   let ciMap = null;
   let thousandWordsData = null;
@@ -797,23 +850,39 @@
 
   async function init() {
     loadFromStorage();
+    startPracticeTimer();
     document.getElementById('category-select').value = currentFilter;
     applyFilter(true);
     window.addEventListener('resize', () => {
       if (currentList.length > 0 && !isRevealed) renderCurrent();
     });
-    // 后台静默加载词典与1000词库，自动为已导入的词补全释义
     await ensureResourcesLoaded();
     enrichMissingMeanings();
+  }
+
+  function getTodayDateStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
 
   function loadFromStorage() {
     const savedWords = localStorage.getItem('tbwz_words_v9');
     const savedRecords = localStorage.getItem('tbwz_records_v9');
     const savedState = localStorage.getItem('tbwz_state_v9');
+    const savedTime = localStorage.getItem('tbwz_time_v9');
 
     wordList = savedWords ? JSON.parse(savedWords) : [...DAILY_WORDS];
     records = savedRecords ? JSON.parse(savedRecords) : {};
+
+    const todayStr = getTodayDateStr();
+    if (savedTime) {
+      const parsedTime = JSON.parse(savedTime);
+      timeStats.totalSeconds = parsedTime.totalSeconds || 0;
+      timeStats.todayDate = todayStr;
+      timeStats.todaySeconds = parsedTime.todayDate === todayStr ? (parsedTime.todaySeconds || 0) : 0;
+    } else {
+      timeStats = { todayDate: todayStr, todaySeconds: 0, totalSeconds: 0 };
+    }
 
     if (savedState) {
       const state = JSON.parse(savedState);
@@ -821,6 +890,7 @@
       currentIndex = state.index || 0;
     }
     updateStatsUI();
+    updateTimeUI();
   }
 
   function saveToStorage() {
@@ -837,7 +907,45 @@
     }));
   }
 
-  // 自动用 ci.json 为那些“自定义导入词语”或空释义词条补全词典解释
+  function saveTimeStats() {
+    localStorage.setItem('tbwz_time_v9', JSON.stringify(timeStats));
+  }
+
+  // 智能前台计时器（仅页面可见时走表，切后台自动暂停）
+  function startPracticeTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        const todayStr = getTodayDateStr();
+        if (timeStats.todayDate !== todayStr) {
+          timeStats.todayDate = todayStr;
+          timeStats.todaySeconds = 0;
+        }
+        timeStats.todaySeconds += 1;
+        timeStats.totalSeconds += 1;
+        updateTimeUI();
+        if (timeStats.todaySeconds % 5 === 0) {
+          saveTimeStats();
+        }
+      }
+    }, 1000);
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        saveTimeStats();
+      }
+    });
+  }
+
+  function updateTimeUI() {
+    const mins = Math.floor(timeStats.todaySeconds / 60);
+    const secs = timeStats.todaySeconds % 60;
+    document.getElementById('today-time-text').textContent = `${mins}分${String(secs).padStart(2, '0')}秒`;
+
+    const totalMins = Math.floor(timeStats.totalSeconds / 60);
+    document.getElementById('total-time-text').textContent = `累计 ${totalMins}分钟`;
+  }
+
   function enrichMissingMeanings() {
     if (!ciMap) return;
     let updated = false;
@@ -871,8 +979,7 @@
     const unpracticedCount = Math.max(0, total - masteredCount - wrongCount);
     const percent = total > 0 ? Math.round((masteredCount / total) * 100) : 0;
 
-    document.getElementById('mastered-summary').textContent = `已掌握：${masteredCount} / ${total} 词`;
-    document.getElementById('mastered-percent').textContent = `${percent}%`;
+    document.getElementById('mastered-summary').textContent = `已掌握：${masteredCount} / ${total} 词 (${percent}%)`;
     document.getElementById('mastered-bar').style.width = `${percent}%`;
 
     const sel = document.getElementById('category-select');
@@ -884,7 +991,6 @@
 
   async function onFilterChange() {
     currentFilter = document.getElementById('category-select').value;
-    // 如果用户直接选了“1000常用词库”且本地还没导入过，自动把 1000.txt 匹配释义后导入
     if (currentFilter === '1000常用词') {
       const has1000 = wordList.some(w => w.cat === '1000常用词');
       if (!has1000) {
@@ -1117,7 +1223,6 @@
     window.addEventListener('touchend', end);
   }
 
-  // 撤回最近一笔
   function undoLastStroke() {
     if (isRevealed || strokeHistory.length === 0) return;
     strokeHistory.pop();
@@ -1125,7 +1230,6 @@
     updateUndoButtonState();
   }
 
-  // 根据历史栈重绘所有格子
   function redrawAllCanvasesFromHistory() {
     canvases.forEach(cvs => {
       const ctx = cvs.getContext('2d');
@@ -1170,7 +1274,6 @@
     }
   }
 
-  // ================= 核对答案（平板/离线100%保证红字对比） =================
   function revealAnswer() {
     if (!currentList.length) return;
     const item = currentList[currentIndex];
@@ -1182,14 +1285,12 @@
       const targetEl = document.getElementById(`writer-${idx}`);
       targetEl.innerHTML = '';
 
-      // 先铺一层半透明标准楷体红字，确保平板/弱网瞬间可见红字叠底
       const fallback = document.createElement('div');
       fallback.className = 'fallback-char';
       fallback.style.fontSize = `${Math.round(currentGridSize * 0.76)}px`;
       fallback.textContent = ch;
       targetEl.appendChild(fallback);
 
-      // 如果 HanziWriter 成功加载，用动态笔顺红字替换静态兜底字
       if (window.HanziWriter) {
         try {
           const hwContainer = document.createElement('div');
@@ -1241,9 +1342,8 @@
     }
   }
 
-  // ================= 加载 1000.txt 与 ci.json 并自动匹配释义 =================
+  // ================= 加载 1000.txt 与 ci.json =================
   async function ensureResourcesLoaded() {
-    // 1. 加载 ci.json 构建释义字典
     if (!ciData) {
       try {
         const res = await fetch('./ci.json');
@@ -1263,7 +1363,6 @@
       } catch (e) {}
     }
 
-    // 2. 加载 1000.txt 并关联 ciMap 释义
     if (!thousandWordsData) {
       try {
         const res = await fetch('./1000.txt');
@@ -1285,7 +1384,6 @@
         }
       } catch (e) {}
     } else if (ciMap) {
-      // 如果之前 1000.txt 先加载而 ci.json 后加载，补充关联释义
       thousandWordsData.forEach(item => {
         if (!item.explanation && ciMap.has(item.ci)) {
           item.explanation = ciMap.get(item.ci);
@@ -1552,7 +1650,7 @@
   }
 
   function exportBackup() {
-    const data = JSON.stringify({ words: wordList, records: records });
+    const data = JSON.stringify({ words: wordList, records: records, timeStats: timeStats });
     document.getElementById('backup-textarea').value = data;
     document.getElementById('backup-textarea').select();
   }
@@ -1565,6 +1663,11 @@
       if (parsed.words && parsed.records) {
         wordList = parsed.words;
         records = parsed.records;
+        if (parsed.timeStats) {
+          timeStats = parsed.timeStats;
+          saveTimeStats();
+          updateTimeUI();
+        }
         saveToStorage();
         enrichMissingMeanings();
         applyFilter(false);
@@ -1579,10 +1682,11 @@
   }
 
   function resetAllData() {
-    if (confirm('确定清空所有练习记录并恢复初始状态吗？')) {
+    if (confirm('确定清空所有练习记录、练习时长并恢复初始状态吗？')) {
       localStorage.removeItem('tbwz_words_v9');
       localStorage.removeItem('tbwz_records_v9');
       localStorage.removeItem('tbwz_state_v9');
+      localStorage.removeItem('tbwz_time_v9');
       currentFilter = 'all';
       currentIndex = 0;
       loadFromStorage();
