@@ -4,8 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>提笔忘字 · 随手练</title>
-  <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
-  <script src="https://unpkg.com/pinyin-pro@3.19.6/dist/index.js"></script>
+  <!-- 多线路加载 HanziWriter 与拼音库，确保手机端顺畅加载笔顺 -->
+  <script src="https://fastly.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
+  <script>
+    if (!window.HanziWriter) {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"><\/script>');
+    }
+  </script>
+  <script src="https://fastly.jsdelivr.net/npm/pinyin-pro@3.19.6/dist/index.js"></script>
   <style>
     :root {
       --bg: #f7f6f2;
@@ -430,25 +436,24 @@
       width: 100%;
       height: 100%;
     }
+    /* 用户自己的手写字迹：永远保持清晰黑色 */
     .free-canvas {
       z-index: 2;
       cursor: crosshair;
       touch-action: none;
-      transition: opacity 0.2s ease;
-    }
-    /* 核对答案时，手写笔迹自动变浅灰，让红字清晰凸显 */
-    .free-canvas.dimmed {
-      opacity: 0.22;
-    }
-    /* 全局隐藏我的字迹状态 */
-    .free-canvas.hidden-strokes {
-      opacity: 0 !important;
     }
 
+    /* 红字演示层：支持全局隐藏或显示 */
     .writer-target {
       z-index: 3;
       pointer-events: none;
+      transition: opacity 0.2s ease;
     }
+    .writer-target.hidden-demo {
+      opacity: 0 !important;
+      visibility: hidden;
+    }
+
     .fallback-char {
       z-index: 3;
       pointer-events: none;
@@ -456,17 +461,23 @@
       align-items: center;
       justify-content: center;
       font-family: "Kaiti SC", "STKaiti", "KaiTi", "楷体", serif;
-      color: rgba(184, 59, 42, 0.85);
+      color: rgba(184, 59, 42, 0.45);
       user-select: none;
       line-height: 1;
     }
 
     .status-bar {
       margin-top: 14px;
-      font-size: 13px;
+      font-size: 14px;
       color: var(--sub);
-      min-height: 20px;
+      min-height: 22px;
       text-align: center;
+    }
+
+    .status-bar.answer-shown {
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 16px;
     }
 
     .actions {
@@ -499,13 +510,13 @@
       border-color: #c3e6c3;
     }
 
-    .btn-toggle-eye {
+    .btn-toggle-demo {
       background: #f5f3ee;
       color: var(--text);
       border-color: #dcd8cf;
     }
 
-    .btn-toggle-eye.active-hide {
+    .btn-toggle-demo.active-hide {
       background: var(--accent-light);
       color: var(--accent);
       border-color: #f0c0b8;
@@ -685,7 +696,7 @@
       <button class="usage-toggle" id="usage-toggle-btn" onclick="toggleUsageGuide()">展开全部说明 ▾</button>
     </div>
     <ul class="usage-list">
-      <li><strong>① 盲写与核对：</strong>看拼音与释义在田字格手写（写错可点“撤回一笔”），点<strong>「核对答案」</strong>后你的笔迹会自动变淡，也可一键全局隐藏/显示自己的字迹。</li>
+      <li><strong>① 盲写与核对：</strong>看拼音与释义在田字格手写（写错可点“撤回一笔”），点<strong>「核对答案」</strong>可看下方正确文字或格内红字笔顺，也可全局隐藏红字演示。</li>
       <li><strong>② 错题本专练：</strong>标为“写错了”的词自动存入顶部<strong>「📕 错题本」</strong>；在错题本里重新写对后自动移出。</li>
       <li class="usage-extra"><strong>③ 词库抽词：</strong>点击顶部<strong>「📖 词库抽词」</strong>，可从 1000 常用词库或全量词典中按字数、关键词或自定义数量随机抽题（自动去重）。</li>
       <li class="usage-extra"><strong>④ 今日得分与导入：</strong>上方实时记录<strong>今日答对得分</strong>与<strong>练习时长</strong>；点<strong>「批量导入」</strong>可粘贴任意词语（空格/换行分隔），自动匹配释义加入练习。</li>
@@ -955,8 +966,8 @@
   let currentIndex = 0;
   let currentFilter = 'all';
 
-  // 全局设置：核对答案时是否隐藏自己的手写字迹（记忆保存）
-  let hideMyStrokesGlobal = false;
+  // 全局设置：核对答案时是否隐藏“红字演示”（你的黑字永远保留清晰显示）
+  let hideRedDemoGlobal = false;
 
   let writers = [];
   let canvases = [];
@@ -990,7 +1001,6 @@
     let lastWidth = document.documentElement.clientWidth || window.innerWidth;
     window.addEventListener('resize', () => {
       const newWidth = document.documentElement.clientWidth || window.innerWidth;
-      // 仅当横向宽度真正变化（如旋转屏幕）时才重绘，避免手机上下滚动地址栏收起触发重绘
       if (Math.abs(newWidth - lastWidth) > 20) {
         lastWidth = newWidth;
         if (currentList.length > 0 && !isRevealed) renderCurrent(true);
@@ -1040,7 +1050,7 @@
       const state = JSON.parse(savedState);
       currentFilter = state.filter || 'all';
       currentIndex = state.index || 0;
-      hideMyStrokesGlobal = !!state.hideMyStrokesGlobal;
+      hideRedDemoGlobal = !!state.hideRedDemoGlobal;
     }
     updateStatsUI();
     updateDailyStatsUI();
@@ -1057,7 +1067,7 @@
     localStorage.setItem('tbwz_state_v9', JSON.stringify({
       filter: currentFilter,
       index: currentIndex,
-      hideMyStrokesGlobal: hideMyStrokesGlobal
+      hideRedDemoGlobal: hideRedDemoGlobal
     }));
   }
 
@@ -1229,11 +1239,9 @@
     document.getElementById('status-text').textContent = "已打乱当前顺序";
   }
 
-  // 手机端竖排大格子尺寸，宽屏横向并排尺寸
   function calcGridSize(charCount) {
     const screenW = document.documentElement.clientWidth || window.innerWidth || 375;
     if (screenW < 560) {
-      // 手机端单列竖排，给足大格子方便手写
       return Math.min(230, Math.max(185, screenW - 96));
     }
     const containerWidth = Math.min(screenW - 56, 580);
@@ -1266,11 +1274,9 @@
     return '';
   }
 
-  // 切题前后锁定滚动条高度，彻底杜绝手机端网页往上弹跳
   function preserveScrollPosition(callback) {
     const savedY = window.scrollY || window.pageYOffset || 0;
     const gridsContainer = document.getElementById('grids-container');
-    // 在重绘前先锁定当前容器高度，防止页面瞬间塌陷导致浏览器自动向上滚动
     const prevHeight = gridsContainer.offsetHeight;
     if (prevHeight > 0) {
       gridsContainer.style.minHeight = `${prevHeight}px`;
@@ -1278,7 +1284,6 @@
 
     callback();
 
-    // 恢复滚动位置并在下一帧再次校准
     window.scrollTo(0, savedY);
     requestAnimationFrame(() => {
       window.scrollTo(0, savedY);
@@ -1291,6 +1296,7 @@
       const statusEl = document.getElementById('status-text');
       const charTagEl = document.getElementById('char-status-tag');
       const gridsContainer = document.getElementById('grids-container');
+      statusEl.className = 'status-bar';
       gridsContainer.innerHTML = '';
       writers = [];
       canvases = [];
@@ -1483,28 +1489,50 @@
     }
   }
 
-  // 应用全局“隐藏/显示我的字迹”样式
-  function applyMyStrokesVisibility() {
-    canvases.forEach(cvs => {
-      if (isRevealed) {
-        cvs.classList.add('dimmed');
-        cvs.classList.toggle('hidden-strokes', hideMyStrokesGlobal);
-      } else {
-        cvs.classList.remove('dimmed', 'hidden-strokes');
-      }
+  // 控制红字演示层的显隐（你的黑字永远清晰可见）
+  function applyRedDemoVisibility() {
+    document.querySelectorAll('.writer-target').forEach(el => {
+      el.classList.toggle('hidden-demo', hideRedDemoGlobal);
     });
   }
 
-  // 全局切换按钮：设定后记忆，接下来所有词都保持该模式
-  function toggleGlobalMyStrokes() {
-    hideMyStrokesGlobal = !hideMyStrokesGlobal;
+  // 全局切换：设定是否隐藏田字格里的红字演示（记忆保存）
+  function toggleGlobalRedDemo() {
+    hideRedDemoGlobal = !hideRedDemoGlobal;
     saveStateOnly();
-    applyMyStrokesVisibility();
-    const btn = document.getElementById('toggle-strokes-btn');
+    applyRedDemoVisibility();
+
+    const btn = document.getElementById('toggle-demo-btn');
     if (btn) {
-      btn.textContent = hideMyStrokesGlobal ? '👁 显示我的字' : '🙈 隐藏我的字';
-      btn.classList.toggle('active-hide', hideMyStrokesGlobal);
+      btn.textContent = hideRedDemoGlobal ? '👁 显示红字演示' : '🙈 隐藏红字演示';
+      btn.classList.toggle('active-hide', hideRedDemoGlobal);
     }
+    // 如果切回“显示红字演示”，顺便播放一遍笔顺
+    if (!hideRedDemoGlobal) {
+      replayAllWriters();
+    }
+  }
+
+  // 双线路加载汉字笔顺数据（确保手机移动网络也能拉取笔顺动画）
+  function loadCharDataWithFallback(char, onComplete) {
+    const urls = [
+      `https://fastly.jsdelivr.net/npm/hanzi-writer-data@2.0/${encodeURIComponent(char)}.json`,
+      `https://cdn.jsdelivr.net/npm/hanzi-writer-data@2.0/${encodeURIComponent(char)}.json`,
+      `https://unpkg.com/hanzi-writer-data@2.0/${encodeURIComponent(char)}.json`
+    ];
+
+    let idx = 0;
+    function tryNext() {
+      if (idx >= urls.length) {
+        onComplete(null);
+        return;
+      }
+      fetch(urls[idx++])
+        .then(res => res.ok ? res.json() : Promise.reject())
+        .then(data => onComplete(data))
+        .catch(() => tryNext());
+    }
+    tryNext();
   }
 
   function revealAnswer() {
@@ -1514,19 +1542,19 @@
     isRevealed = true;
     writers = [];
 
-    // 核对答案时，自动淡化黑笔迹或按全局设置直接隐藏黑笔迹
-    applyMyStrokesVisibility();
-
     chars.forEach((ch, idx) => {
       const targetEl = document.getElementById(`writer-${idx}`);
       targetEl.innerHTML = '';
+      targetEl.classList.toggle('hidden-demo', hideRedDemoGlobal);
 
+      // 先放静态半透明楷体兜底
       const fallback = document.createElement('div');
       fallback.className = 'fallback-char';
       fallback.style.fontSize = `${Math.round(currentGridSize * 0.76)}px`;
       fallback.textContent = ch;
       targetEl.appendChild(fallback);
 
+      // 多线路加载矢量笔顺数据，手机端也能播放一笔一画的笔顺动画
       if (window.HanziWriter) {
         try {
           const hwContainer = document.createElement('div');
@@ -1536,14 +1564,21 @@
             width: currentGridSize,
             height: currentGridSize,
             padding: Math.round(currentGridSize * 0.08),
-            strokeColor: 'rgba(184, 59, 42, 0.85)',
+            strokeColor: 'rgba(184, 59, 42, 0.55)',
             outlineColor: 'rgba(184, 59, 42, 0.14)',
             strokeAnimationSpeed: 1.3,
-            delayBetweenStrokes: 120,
+            delayBetweenStrokes: 140,
+            charDataLoader: (charName, onLoad) => {
+              loadCharDataWithFallback(charName, (data) => {
+                if (data) onLoad(data);
+              });
+            },
             onLoadCharDataSuccess: () => {
               targetEl.innerHTML = '';
               targetEl.appendChild(hwContainer);
-              setTimeout(() => w.animateCharacter(), idx * 300);
+              if (!hideRedDemoGlobal) {
+                setTimeout(() => w.animateCharacter(), idx * 300);
+              }
             }
           });
           writers.push(w);
@@ -1551,11 +1586,17 @@
       }
     });
 
-    document.getElementById('status-text').textContent = `正确答案：「${item.word}」`;
+    const statusEl = document.getElementById('status-text');
+    statusEl.textContent = `正确答案：「${item.word}」`;
+    statusEl.className = 'status-bar answer-shown';
     renderButtons(true);
   }
 
   function replayAllWriters() {
+    // 如果当前处于隐藏红字演示状态，点重播笔顺时自动临时显示红字演示
+    if (hideRedDemoGlobal) {
+      document.querySelectorAll('.writer-target').forEach(el => el.classList.remove('hidden-demo'));
+    }
     writers.forEach((w, idx) => {
       setTimeout(() => w.animateCharacter(), idx * 300);
     });
@@ -1570,10 +1611,10 @@
         <button class="btn btn-primary" onclick="revealAnswer()">核对答案</button>
       `;
     } else {
-      const eyeLabel = hideMyStrokesGlobal ? '👁 显示我的字' : '🙈 隐藏我的字';
-      const eyeClass = hideMyStrokesGlobal ? 'btn btn-toggle-eye active-hide' : 'btn btn-toggle-eye';
+      const demoLabel = hideRedDemoGlobal ? '👁 显示红字演示' : '🙈 隐藏红字演示';
+      const demoClass = hideRedDemoGlobal ? 'btn btn-toggle-demo active-hide' : 'btn btn-toggle-demo';
       box.innerHTML = `
-        <button class="${eyeClass}" id="toggle-strokes-btn" onclick="toggleGlobalMyStrokes()">${eyeLabel}</button>
+        <button class="${demoClass}" id="toggle-demo-btn" onclick="toggleGlobalRedDemo()">${demoLabel}</button>
         <button class="btn" onclick="replayAllWriters()">重播笔顺</button>
         <button class="btn btn-wrong" onclick="markResult(false)">写错了</button>
         <button class="btn btn-right" onclick="markResult(true)">全写对了</button>
@@ -1951,7 +1992,7 @@
       localStorage.removeItem('tbwz_time_v9');
       currentFilter = 'all';
       currentIndex = 0;
-      hideMyStrokesGlobal = false;
+      hideRedDemoGlobal = false;
       loadFromStorage();
       document.getElementById('category-select').value = 'all';
       applyFilter(false, false);
