@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>提笔忘字 · 日常用语随手练</title>
+  <title>提笔忘字 · 随手练</title>
   <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
   <script src="https://unpkg.com/pinyin-pro@3.19.6/dist/index.js"></script>
   <style>
@@ -148,6 +148,7 @@
     }
 
     .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
     .btn-primary {
       background: var(--accent);
@@ -171,7 +172,9 @@
     }
 
     select.category-select {
-      padding: 6px 10px;
+      flex: 1;
+      min-width: 180px;
+      padding: 7px 10px;
       border-radius: 8px;
       border: 1px solid var(--border);
       background: var(--card);
@@ -179,31 +182,6 @@
       color: var(--text);
       outline: none;
       cursor: pointer;
-    }
-
-    .tab-group {
-      display: flex;
-      background: #ebe8e0;
-      padding: 3px;
-      border-radius: 9px;
-    }
-
-    .tab {
-      padding: 4px 10px;
-      font-size: 12px;
-      border-radius: 7px;
-      cursor: pointer;
-      color: var(--sub);
-      border: none;
-      background: transparent;
-      transition: all 0.2s;
-    }
-
-    .tab.active {
-      background: var(--card);
-      color: var(--text);
-      font-weight: 600;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
 
     .card {
@@ -289,11 +267,6 @@
       border-radius: 8px;
       overflow: hidden;
       touch-action: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    .grid-wrapper.active-quiz-grid {
-      box-shadow: 0 0 0 3px rgba(184, 59, 42, 0.2);
     }
 
     .grid-wrapper::before {
@@ -333,7 +306,7 @@
     .diagonal-1 { transform: rotate(45deg); }
     .diagonal-2 { transform: rotate(-45deg); }
 
-    .free-canvas, .writer-target, .fallback-red-char {
+    .free-canvas, .writer-target, .fallback-char {
       position: absolute;
       top: 0;
       left: 0;
@@ -341,17 +314,15 @@
       height: 100%;
     }
     .free-canvas { z-index: 3; cursor: crosshair; touch-action: none; }
-    .writer-target { z-index: 4; pointer-events: none; }
-
-    /* 离线/平板兜底半透明红字楷体叠层 */
-    .fallback-red-char {
-      z-index: 4;
+    .writer-target { z-index: 2; pointer-events: none; }
+    .fallback-char {
+      z-index: 2;
       pointer-events: none;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: "STKaiti", "KaiTi", "Kaiti SC", "DFKai-SB", "BiauKai", serif;
-      color: rgba(184, 59, 42, 0.45);
+      font-family: "Kaiti SC", "STKaiti", "KaiTi", "楷体", serif;
+      color: rgba(184, 59, 42, 0.42);
       user-select: none;
       line-height: 1;
     }
@@ -364,15 +335,12 @@
       text-align: center;
     }
 
-    .status-bar.success { color: var(--green); font-weight: 600; }
-    .status-bar.error { color: var(--accent); font-weight: 600; }
-
     .actions {
       display: flex;
       gap: 10px;
       margin-top: 14px;
       width: 100%;
-      max-width: 440px;
+      max-width: 460px;
       justify-content: center;
     }
 
@@ -444,7 +412,7 @@
 
     .modal-box textarea {
       width: 100%;
-      height: 140px;
+      height: 120px;
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 10px;
@@ -548,20 +516,6 @@
       text-overflow: ellipsis;
       margin-top: 2px;
     }
-
-    .empty-guide {
-      padding: 24px 16px;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-    }
-    .empty-guide p {
-      font-size: 14px;
-      color: var(--sub);
-      line-height: 1.6;
-    }
   </style>
 </head>
 <body>
@@ -570,7 +524,7 @@
   <header>
     <h1>提笔忘字 <span class="badge" id="progress-badge">1 / 120</span></h1>
     <div class="header-actions">
-      <button class="btn btn-dict" onclick="openDictModal()">📖 词典扩充</button>
+      <button class="btn btn-dict" onclick="openDictModal()">📖 词库抽词</button>
       <button class="btn" onclick="openImportModal()">批量导入</button>
       <button class="btn" onclick="openBackupModal()">备份</button>
     </div>
@@ -597,20 +551,15 @@
       <option value="unpracticed">未练习的新词 (0)</option>
       <option value="wrong">错题本 (0)</option>
       <option value="mastered">已掌握 (0)</option>
+      <option value="1000常用词">1000常用词库</option>
       <option value="日常情绪">日常情绪与状态</option>
       <option value="身体动作">身体与动作</option>
       <option value="居家生活">居家与生活物品</option>
       <option value="饮食果蔬">饮食与果蔬</option>
       <option value="社交职场">社交与书面高频</option>
       <option value="高频成语">高频易错成语</option>
-      <option value="词典筛选">词典扩充</option>
       <option value="手动添加">手动添加</option>
     </select>
-
-    <div class="tab-group">
-      <button class="tab active" id="mode-free" onclick="switchMode('free')">盲写自查</button>
-      <button class="tab" id="mode-quiz" onclick="switchMode('quiz')">智能判分</button>
-    </div>
   </div>
 
   <div class="card" id="main-card">
@@ -634,29 +583,33 @@
   </div>
 </div>
 
-<!-- 词典扩充弹窗 -->
+<!-- 词库抽词弹窗（优先筛选 1000.txt 并自动匹配 ci.json 释义） -->
 <div class="modal-mask" id="dict-modal">
   <div class="modal-box">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h3>📖 从《中华词语词典》搜索扩充</h3>
-      <span id="dict-count-label" style="font-size:12px; color:var(--sub);">准备加载词典...</span>
+      <h3>📖 常用词筛选（自动匹配词典释义）</h3>
+      <span id="dict-count-label" style="font-size:12px; color:var(--sub);">准备加载词库...</span>
     </div>
     <div class="dict-filters">
-      <input type="text" id="dict-search-input" placeholder="输入关键词搜索（如：笑、病、食物）" oninput="filterDictResults()" />
+      <select id="dict-source-select" onchange="filterDictResults()">
+        <option value="1000" selected>1000常用词库 (1000.txt)</option>
+        <option value="ci">全量中华词典 (ci.json)</option>
+      </select>
+      <input type="text" id="dict-search-input" placeholder="搜汉字或释义（留空全库）" oninput="filterDictResults()" />
       <select id="dict-len-select" onchange="filterDictResults()">
-        <option value="0">不限字数</option>
-        <option value="2" selected>2字词</option>
+        <option value="0" selected>不限字数</option>
+        <option value="2">2字词</option>
         <option value="3">3字词</option>
         <option value="4">4字词</option>
       </select>
       <div class="count-picker">
-        <input type="number" id="dict-pick-count" value="15" min="1" max="500" onchange="filterDictResults()" />
+        <input type="number" id="dict-pick-count" value="20" min="1" max="1000" onchange="filterDictResults()" />
         <span style="font-size:12px; color:var(--sub);">个</span>
         <button class="btn btn-primary" style="padding:4px 8px; font-size:12px;" onclick="pickRandomFromDict()">🎲 随机抽取</button>
       </div>
     </div>
     <div class="dict-list" id="dict-results-list">
-      <div style="text-align:center; padding:40px 10px; color:var(--sub); font-size:13px;">正在读取 ci.json 词典数据...</div>
+      <div style="text-align:center; padding:40px 10px; color:var(--sub); font-size:13px;">正在读取 1000.txt 与 ci.json 匹配释义...</div>
     </div>
     <div class="modal-footer" style="justify-content: space-between;">
       <button class="btn btn-primary" id="add-all-dict-btn" onclick="addAllVisibleDictItems()">全部加入练习本</button>
@@ -669,8 +622,8 @@
 <div class="modal-mask" id="import-modal">
   <div class="modal-box">
     <h3>批量导入整词词库</h3>
-    <p>粘贴中文词语（支持空格、逗号或换行分隔，可一次粘贴上千词）。已存在的词会自动跳过不重复导入。</p>
-    <textarea id="batch-textarea" placeholder="将 TXT 里的词语复制粘贴到这里..."></textarea>
+    <p>粘贴中文词语（用空格、逗号或换行隔开均可）。系统会自动匹配 ci.json 里的释义，并跳过重复词。</p>
+    <textarea id="batch-textarea" placeholder="例如：&#10;单薄 单于 落枕 丢三落四&#10;迫不及待 鬼鬼祟祟 声名狼藉"></textarea>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('import-modal')">取消</button>
       <button class="btn btn-primary" onclick="processBatchImport()">确认导入</button>
@@ -828,27 +781,30 @@
   let records = {};
   let currentList = [];
   let currentIndex = 0;
-  let currentMode = 'free';
   let currentFilter = 'all';
 
   let writers = [];
   let canvases = [];
+  let strokeHistory = []; // 笔画历史栈，支持精准“撤回一笔”
   let isRevealed = false;
   let currentGridSize = 180;
-  let quizCharIndex = 0;
-  let quizTotalMistakes = 0;
 
-  let dictData = null;
-  let dictMap = null;
+  // 外部文件缓存（ci.json 与 1000.txt）
+  let ciData = null;
+  let ciMap = null;
+  let thousandWordsData = null;
   let currentFilteredDict = [];
 
-  function init() {
+  async function init() {
     loadFromStorage();
     document.getElementById('category-select').value = currentFilter;
     applyFilter(true);
     window.addEventListener('resize', () => {
       if (currentList.length > 0 && !isRevealed) renderCurrent();
     });
+    // 后台静默加载词典与1000词库，自动为已导入的词补全释义
+    await ensureResourcesLoaded();
+    enrichMissingMeanings();
   }
 
   function loadFromStorage() {
@@ -863,9 +819,6 @@
       const state = JSON.parse(savedState);
       currentFilter = state.filter || 'all';
       currentIndex = state.index || 0;
-      currentMode = state.mode || 'free';
-      document.getElementById('mode-free').classList.toggle('active', currentMode === 'free');
-      document.getElementById('mode-quiz').classList.toggle('active', currentMode === 'quiz');
     }
     updateStatsUI();
   }
@@ -880,9 +833,28 @@
   function saveStateOnly() {
     localStorage.setItem('tbwz_state_v9', JSON.stringify({
       filter: currentFilter,
-      index: currentIndex,
-      mode: currentMode
+      index: currentIndex
     }));
+  }
+
+  // 自动用 ci.json 为那些“自定义导入词语”或空释义词条补全词典解释
+  function enrichMissingMeanings() {
+    if (!ciMap) return;
+    let updated = false;
+    wordList.forEach(item => {
+      if ((!item.meaning || item.meaning === '自定义导入词语') && ciMap.has(item.word)) {
+        item.meaning = ciMap.get(item.word);
+        updated = true;
+      }
+      if (!item.py) {
+        item.py = generatePinyinSafe(item.word);
+        updated = true;
+      }
+    });
+    if (updated) {
+      saveToStorage();
+      if (currentList.length > 0 && !isRevealed) renderCurrent();
+    }
   }
 
   function updateStatsUI() {
@@ -910,8 +882,33 @@
     sel.options[3].text = `已掌握 (${masteredCount})`;
   }
 
-  function onFilterChange() {
+  async function onFilterChange() {
     currentFilter = document.getElementById('category-select').value;
+    // 如果用户直接选了“1000常用词库”且本地还没导入过，自动把 1000.txt 匹配释义后导入
+    if (currentFilter === '1000常用词') {
+      const has1000 = wordList.some(w => w.cat === '1000常用词');
+      if (!has1000) {
+        document.getElementById('status-text').textContent = "正在加载 1000.txt 并匹配词典释义...";
+        await ensureResourcesLoaded();
+        if (thousandWordsData && thousandWordsData.length > 0) {
+          const existingSet = getExistingWordsSet();
+          let added = 0;
+          [...thousandWordsData].reverse().forEach(item => {
+            if (!existingSet.has(item.ci)) {
+              existingSet.add(item.ci);
+              wordList.unshift({
+                word: item.ci,
+                py: generatePinyinSafe(item.ci),
+                cat: '1000常用词',
+                meaning: item.explanation || ''
+              });
+              added++;
+            }
+          });
+          if (added > 0) saveToStorage();
+        }
+      }
+    }
     applyFilter(false);
   }
 
@@ -966,17 +963,21 @@
     if (word && cleaned.includes(word)) {
       cleaned = cleaned.split(word).join('【 】');
     }
-    if (cleaned.length > 90) {
-      cleaned = cleaned.slice(0, 90) + '...';
+    if (cleaned.length > 95) {
+      cleaned = cleaned.slice(0, 95) + '...';
     }
     return cleaned;
   }
 
   function getWordPinyin(item) {
     if (item.py) return item.py;
+    return generatePinyinSafe(item.word);
+  }
+
+  function generatePinyinSafe(word) {
     if (window.pinyinPro && typeof window.pinyinPro.pinyin === 'function') {
       try {
-        return window.pinyinPro.pinyin(item.word, { toneType: 'symbol' });
+        return window.pinyinPro.pinyin(word, { toneType: 'symbol' });
       } catch (e) {}
     }
     return '';
@@ -986,23 +987,17 @@
     const statusEl = document.getElementById('status-text');
     const charTagEl = document.getElementById('char-status-tag');
     const gridsContainer = document.getElementById('grids-container');
-    statusEl.className = 'status-bar';
     gridsContainer.innerHTML = '';
     writers = [];
     canvases = [];
+    strokeHistory = [];
 
     if (currentList.length === 0) {
       charTagEl.style.display = 'none';
       document.getElementById('category-tag').textContent = "提示";
       document.getElementById('pinyin-text').textContent = "当前列表为空";
-      document.getElementById('meaning-text').textContent = "";
+      document.getElementById('meaning-text').textContent = "可切换其他分类，或点击右上角“词库抽词”";
       document.getElementById('progress-badge').textContent = "0 / 0";
-      gridsContainer.innerHTML = `
-        <div class="empty-guide">
-          <p>当前分类下没有词语。<br>你可以切换回“全部词库”继续练习，或从词典中搜索新词。</p>
-          <button class="btn btn-primary" style="padding:10px 20px; font-size:15px;" onclick="document.getElementById('category-select').value='all'; onFilterChange();">返回全部词库</button>
-        </div>
-      `;
       statusEl.textContent = "";
       document.getElementById('action-buttons').innerHTML = '';
       return;
@@ -1052,24 +1047,253 @@
 
       const cvs = wrapper.querySelector('canvas');
       canvases.push(cvs);
-      bindCanvasEvents(cvs);
+      bindCanvasEvents(cvs, idx);
     });
 
-    if (currentMode === 'free') {
-      canvases.forEach(c => c.style.display = 'block');
-      statusEl.textContent = `请在上方 ${chars.length} 个田字格中写出完整词语`;
-      renderFreeButtons(false);
-    } else {
-      canvases.forEach(c => c.style.display = 'none');
-      quizCharIndex = 0;
-      quizTotalMistakes = 0;
-      statusEl.textContent = `请先写第 1 个字（共 ${chars.length} 个字）`;
-      startSequentialQuiz(chars);
-      renderQuizButtons();
+    statusEl.textContent = `请在上方 ${chars.length} 个田字格中写出完整词语`;
+    renderButtons(false);
+  }
+
+  // ================= 手写画布与精准“撤回一笔” =================
+  function bindCanvasEvents(cvs, canvasIndex) {
+    const ctx = cvs.getContext('2d');
+    ctx.lineWidth = Math.max(4, Math.round(currentGridSize / 35));
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#222222';
+
+    let drawing = false;
+    let currentStrokePoints = [];
+
+    const getPos = (e) => {
+      const rect = cvs.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return { x: clientX - rect.left, y: clientY - rect.top };
+    };
+
+    const start = (e) => {
+      if (isRevealed) return;
+      if (e.cancelable) e.preventDefault();
+      drawing = true;
+      const pos = getPos(e);
+      currentStrokePoints = [pos];
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+      ctx.lineTo(pos.x + 0.1, pos.y + 0.1);
+      ctx.stroke();
+    };
+
+    const move = (e) => {
+      if (!drawing || isRevealed) return;
+      if (e.cancelable) e.preventDefault();
+      const pos = getPos(e);
+      const prev = currentStrokePoints[currentStrokePoints.length - 1];
+      ctx.beginPath();
+      ctx.moveTo(prev.x, prev.y);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+      currentStrokePoints.push(pos);
+    };
+
+    const end = () => {
+      if (!drawing) return;
+      drawing = false;
+      if (currentStrokePoints.length > 0) {
+        strokeHistory.push({
+          canvasIndex: canvasIndex,
+          points: currentStrokePoints
+        });
+        updateUndoButtonState();
+      }
+      currentStrokePoints = [];
+    };
+
+    cvs.addEventListener('mousedown', start);
+    cvs.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', end);
+    cvs.addEventListener('touchstart', start, { passive: false });
+    cvs.addEventListener('touchmove', move, { passive: false });
+    window.addEventListener('touchend', end);
+  }
+
+  // 撤回最近一笔
+  function undoLastStroke() {
+    if (isRevealed || strokeHistory.length === 0) return;
+    strokeHistory.pop();
+    redrawAllCanvasesFromHistory();
+    updateUndoButtonState();
+  }
+
+  // 根据历史栈重绘所有格子
+  function redrawAllCanvasesFromHistory() {
+    canvases.forEach(cvs => {
+      const ctx = cvs.getContext('2d');
+      ctx.clearRect(0, 0, cvs.width, cvs.height);
+    });
+
+    strokeHistory.forEach(stroke => {
+      const cvs = canvases[stroke.canvasIndex];
+      if (!cvs || stroke.points.length === 0) return;
+      const ctx = cvs.getContext('2d');
+      ctx.lineWidth = Math.max(4, Math.round(currentGridSize / 35));
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = '#222222';
+
+      ctx.beginPath();
+      ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+      if (stroke.points.length === 1) {
+        ctx.lineTo(stroke.points[0].x + 0.1, stroke.points[0].y + 0.1);
+      } else {
+        for (let i = 1; i < stroke.points.length; i++) {
+          ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+        }
+      }
+      ctx.stroke();
+    });
+  }
+
+  function clearAllCanvases() {
+    strokeHistory = [];
+    canvases.forEach(cvs => {
+      const ctx = cvs.getContext('2d');
+      ctx.clearRect(0, 0, cvs.width, cvs.height);
+    });
+    updateUndoButtonState();
+  }
+
+  function updateUndoButtonState() {
+    const undoBtn = document.getElementById('undo-btn');
+    if (undoBtn) {
+      undoBtn.disabled = strokeHistory.length === 0;
     }
   }
 
-  // ================= 词典扩充逻辑 =================
+  // ================= 核对答案（平板/离线100%保证红字对比） =================
+  function revealAnswer() {
+    if (!currentList.length) return;
+    const item = currentList[currentIndex];
+    const chars = [...item.word];
+    isRevealed = true;
+    writers = [];
+
+    chars.forEach((ch, idx) => {
+      const targetEl = document.getElementById(`writer-${idx}`);
+      targetEl.innerHTML = '';
+
+      // 先铺一层半透明标准楷体红字，确保平板/弱网瞬间可见红字叠底
+      const fallback = document.createElement('div');
+      fallback.className = 'fallback-char';
+      fallback.style.fontSize = `${Math.round(currentGridSize * 0.76)}px`;
+      fallback.textContent = ch;
+      targetEl.appendChild(fallback);
+
+      // 如果 HanziWriter 成功加载，用动态笔顺红字替换静态兜底字
+      if (window.HanziWriter) {
+        try {
+          const hwContainer = document.createElement('div');
+          hwContainer.style.width = '100%';
+          hwContainer.style.height = '100%';
+          const w = HanziWriter.create(hwContainer, ch, {
+            width: currentGridSize,
+            height: currentGridSize,
+            padding: Math.round(currentGridSize * 0.08),
+            strokeColor: 'rgba(184, 59, 42, 0.45)',
+            outlineColor: 'rgba(184, 59, 42, 0.12)',
+            strokeAnimationSpeed: 1.3,
+            delayBetweenStrokes: 120,
+            onLoadCharDataSuccess: () => {
+              targetEl.innerHTML = '';
+              targetEl.appendChild(hwContainer);
+              setTimeout(() => w.animateCharacter(), idx * 300);
+            }
+          });
+          writers.push(w);
+        } catch (e) {}
+      }
+    });
+
+    document.getElementById('status-text').textContent = `正确答案：「${item.word}」，对比红字后标记对错`;
+    renderButtons(true);
+  }
+
+  function replayAllWriters() {
+    writers.forEach((w, idx) => {
+      setTimeout(() => w.animateCharacter(), idx * 300);
+    });
+  }
+
+  function renderButtons(revealed) {
+    const box = document.getElementById('action-buttons');
+    if (!revealed) {
+      box.innerHTML = `
+        <button class="btn" id="undo-btn" onclick="undoLastStroke()" disabled>↩ 撤回一笔</button>
+        <button class="btn" onclick="clearAllCanvases()">全部重写</button>
+        <button class="btn btn-primary" onclick="revealAnswer()">核对答案</button>
+      `;
+    } else {
+      box.innerHTML = `
+        <button class="btn" onclick="replayAllWriters()">重播笔顺</button>
+        <button class="btn btn-wrong" onclick="markResult(false)">写错了</button>
+        <button class="btn btn-right" onclick="markResult(true)">全写对了</button>
+      `;
+    }
+  }
+
+  // ================= 加载 1000.txt 与 ci.json 并自动匹配释义 =================
+  async function ensureResourcesLoaded() {
+    // 1. 加载 ci.json 构建释义字典
+    if (!ciData) {
+      try {
+        const res = await fetch('./ci.json');
+        if (res.ok) {
+          const raw = await res.json();
+          const seen = new Set();
+          ciData = [];
+          ciMap = new Map();
+          for (const entry of raw) {
+            if (entry.ci && /^[\u4e00-\u9fa5]{1,6}$/.test(entry.ci) && !seen.has(entry.ci)) {
+              seen.add(entry.ci);
+              ciData.push(entry);
+              ciMap.set(entry.ci, entry.explanation || '');
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    // 2. 加载 1000.txt 并关联 ciMap 释义
+    if (!thousandWordsData) {
+      try {
+        const res = await fetch('./1000.txt');
+        if (res.ok) {
+          const text = await res.text();
+          const tokens = text.split(/[\s,，、；;。！？!?\n\r]+/).filter(Boolean);
+          const seen = new Set();
+          thousandWordsData = [];
+          for (const t of tokens) {
+            const clean = (t.match(/[\u4e00-\u9fa5]/g) || []).join('');
+            if (clean && clean.length <= 6 && !seen.has(clean)) {
+              seen.add(clean);
+              thousandWordsData.push({
+                ci: clean,
+                explanation: ciMap ? (ciMap.get(clean) || '') : ''
+              });
+            }
+          }
+        }
+      } catch (e) {}
+    } else if (ciMap) {
+      // 如果之前 1000.txt 先加载而 ci.json 后加载，补充关联释义
+      thousandWordsData.forEach(item => {
+        if (!item.explanation && ciMap.has(item.ci)) {
+          item.explanation = ciMap.get(item.ci);
+        }
+      });
+    }
+  }
+
   function getExistingWordsSet() {
     const set = new Set(wordList.map(w => w.word));
     Object.keys(records).forEach(w => set.add(w));
@@ -1079,54 +1303,33 @@
   function getDesiredPickCount() {
     const input = document.getElementById('dict-pick-count');
     let val = parseInt(input.value, 10);
-    if (isNaN(val) || val < 1) val = 15;
-    if (val > 500) val = 500;
+    if (isNaN(val) || val < 1) val = 20;
+    if (val > 1000) val = 1000;
     input.value = val;
     return val;
   }
 
-  async function ensureDictLoaded() {
-    if (dictData) return true;
-    const listEl = document.getElementById('dict-results-list');
-    try {
-      const res = await fetch('./ci.json');
-      if (!res.ok) throw new Error('无法读取 ci.json');
-      const raw = await res.json();
-      const seen = new Set();
-      dictData = [];
-      for (const entry of raw) {
-        if (entry.ci && /^[\u4e00-\u9fa5]{1,6}$/.test(entry.ci) && !seen.has(entry.ci)) {
-          seen.add(entry.ci);
-          dictData.push(entry);
-        }
-      }
-      dictMap = new Map();
-      dictData.forEach(entry => dictMap.set(entry.ci, entry.explanation || ''));
-      return true;
-    } catch (err) {
-      if (listEl) {
-        listEl.innerHTML = `<div style="text-align:center; padding:30px 12px; color:var(--accent); font-size:13px;">
-          读取 ci.json 失败，可直接使用批量导入粘贴词库。
-        </div>`;
-      }
-      return false;
-    }
-  }
-
   async function openDictModal() {
     document.getElementById('dict-modal').classList.add('open');
-    const ok = await ensureDictLoaded();
-    if (ok) {
-      filterDictResults();
+    await ensureResourcesLoaded();
+    pickRandomFromDict();
+  }
+
+  function getActiveSourceArray() {
+    const src = document.getElementById('dict-source-select').value;
+    if (src === '1000' && thousandWordsData && thousandWordsData.length > 0) {
+      return thousandWordsData;
     }
+    return ciData || [];
   }
 
   function getFilteredPool() {
+    const sourceArr = getActiveSourceArray();
     const kw = document.getElementById('dict-search-input').value.trim();
     const lenFilter = parseInt(document.getElementById('dict-len-select').value, 10);
     const existingSet = getExistingWordsSet();
 
-    return dictData.filter(d => {
+    return sourceArr.filter(d => {
       if (existingSet.has(d.ci)) return false;
       if (lenFilter > 0 && d.ci.length !== lenFilter) return false;
       if (kw && !d.ci.includes(kw) && !(d.explanation && d.explanation.includes(kw))) return false;
@@ -1135,19 +1338,16 @@
   }
 
   function filterDictResults() {
-    if (!dictData) return;
-    const limit = getDesiredPickCount();
     const pool = getFilteredPool();
+    const limit = getDesiredPickCount();
     const matches = pool.slice(0, limit);
-
     currentFilteredDict = matches;
-    renderDictList(matches, `匹配到 ${pool.length} 个未加新词，展示前 ${matches.length} 个`);
+    renderDictList(matches, `剩余未加新词 ${pool.length} 个，展示前 ${matches.length} 个`);
   }
 
   function pickRandomFromDict() {
-    if (!dictData || dictData.length === 0) return;
-    const count = getDesiredPickCount();
     const pool = getFilteredPool();
+    const count = getDesiredPickCount();
 
     if (pool.length === 0) {
       currentFilteredDict = [];
@@ -1180,7 +1380,7 @@
     const existingSet = getExistingWordsSet();
     listEl.innerHTML = items.map((item, idx) => {
       const added = existingSet.has(item.ci);
-      const exp = (item.explanation || '暂无释义').replace(/\n+/g, ' ');
+      const exp = (item.explanation || '已自动匹配拼音，点击加入练习').replace(/\n+/g, ' ');
       return `
         <div class="dict-item">
           <div class="dict-item-info">
@@ -1195,23 +1395,17 @@
     }).join('');
   }
 
-  function generatePinyinSafe(word) {
-    if (window.pinyinPro && typeof window.pinyinPro.pinyin === 'function') {
-      try {
-        return window.pinyinPro.pinyin(word, { toneType: 'symbol' });
-      } catch (e) {}
-    }
-    return '';
-  }
-
   function addDictItemByIndex(idx, btnEl) {
     const item = currentFilteredDict[idx];
     if (!item) return;
+    const src = document.getElementById('dict-source-select').value;
+    const catName = src === '1000' ? '1000常用词' : '手动添加';
+
     if (!getExistingWordsSet().has(item.ci)) {
       wordList.unshift({
         word: item.ci,
         py: generatePinyinSafe(item.ci),
-        cat: '词典筛选',
+        cat: catName,
         meaning: item.explanation || ''
       });
       saveToStorage();
@@ -1228,6 +1422,8 @@
   function addAllVisibleDictItems() {
     if (!currentFilteredDict.length) return;
     const existingSet = getExistingWordsSet();
+    const src = document.getElementById('dict-source-select').value;
+    const catName = src === '1000' ? '1000常用词' : '手动添加';
     let addedCount = 0;
 
     [...currentFilteredDict].reverse().forEach(item => {
@@ -1236,7 +1432,7 @@
         wordList.unshift({
           word: item.ci,
           py: generatePinyinSafe(item.ci),
-          cat: '词典筛选',
+          cat: catName,
           meaning: item.explanation || ''
         });
         addedCount++;
@@ -1248,240 +1444,13 @@
       document.getElementById('category-select').value = 'all';
       onFilterChange();
       closeModal('dict-modal');
-      document.getElementById('status-text').textContent = `🎉 已从词典加入 ${addedCount} 个新词！`;
+      document.getElementById('status-text').textContent = `🎉 已加入 ${addedCount} 个常用新词！`;
     } else {
       alert('当前列表中的词都已经加入过啦');
     }
   }
 
-  // ================= 模式 A：整词盲写自由手写（双层红字对比保障） =================
-  function bindCanvasEvents(cvs) {
-    const ctx = cvs.getContext('2d');
-    ctx.lineWidth = Math.max(4, Math.round(currentGridSize / 35));
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.strokeStyle = '#222222';
-
-    let drawing = false;
-    let lx = 0, ly = 0;
-
-    const getPos = (e) => {
-      const rect = cvs.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      return { x: clientX - rect.left, y: clientY - rect.top };
-    };
-
-    const start = (e) => {
-      if (isRevealed) return;
-      if (e.cancelable) e.preventDefault();
-      drawing = true;
-      const pos = getPos(e);
-      lx = pos.x;
-      ly = pos.y;
-    };
-
-    const move = (e) => {
-      if (!drawing || isRevealed) return;
-      if (e.cancelable) e.preventDefault();
-      const pos = getPos(e);
-      ctx.beginPath();
-      ctx.moveTo(lx, ly);
-      ctx.lineTo(pos.x, pos.y);
-      ctx.stroke();
-      lx = pos.x;
-      ly = pos.y;
-    };
-
-    const end = () => { drawing = false; };
-
-    cvs.addEventListener('mousedown', start);
-    cvs.addEventListener('mousemove', move);
-    window.addEventListener('mouseup', end);
-    cvs.addEventListener('touchstart', start, { passive: false });
-    cvs.addEventListener('touchmove', move, { passive: false });
-    window.addEventListener('touchend', end);
-  }
-
-  function clearAllCanvases() {
-    canvases.forEach(cvs => {
-      const ctx = cvs.getContext('2d');
-      ctx.clearRect(0, 0, cvs.width, cvs.height);
-    });
-  }
-
-  // 渲染兜底楷体半透明红字（当 HanziWriter 外链受限时确保红字依然 100% 叠加上去）
-  function renderFallbackRedChar(targetEl, ch) {
-    targetEl.innerHTML = `<div class="fallback-red-char" style="font-size:${Math.round(currentGridSize * 0.78)}px;">${ch}</div>`;
-  }
-
-  function revealFreeAnswer() {
-    if (!currentList.length) return;
-    const item = currentList[currentIndex];
-    const chars = [...item.word];
-    isRevealed = true;
-    writers = [];
-
-    chars.forEach((ch, idx) => {
-      const targetId = `writer-${idx}`;
-      const targetEl = document.getElementById(targetId);
-      targetEl.innerHTML = '';
-
-      if (window.HanziWriter) {
-        // 先放一层兜底红字，等 HanziWriter 数据加载成功后再替换成动态笔顺红字
-        renderFallbackRedChar(targetEl, ch);
-        try {
-          const w = window.HanziWriter.create(targetId, ch, {
-            width: currentGridSize,
-            height: currentGridSize,
-            padding: Math.round(currentGridSize * 0.08),
-            strokeColor: 'rgba(184, 59, 42, 0.48)',
-            outlineColor: 'rgba(184, 59, 42, 0.14)',
-            strokeAnimationSpeed: 1.3,
-            delayBetweenStrokes: 120,
-            onLoadCharDataSuccess: function() {
-              // 笔顺数据加载成功，移除静态兜底文字，播放动态笔顺
-              const fallback = targetEl.querySelector('.fallback-red-char');
-              if (fallback) fallback.remove();
-            }
-          });
-          writers.push(w);
-          setTimeout(() => w.animateCharacter(), idx * 350);
-        } catch (e) {
-          renderFallbackRedChar(targetEl, ch);
-        }
-      } else {
-        // 平板弱网未加载出外部笔顺库时，直接显示半透明朱砂红楷体叠加对比
-        renderFallbackRedChar(targetEl, ch);
-      }
-    });
-
-    document.getElementById('status-text').textContent = `正确答案：「${item.word}」，对比红字后标记对错`;
-    renderFreeButtons(true);
-  }
-
-  function replayAllWriters() {
-    writers.forEach((w, idx) => {
-      setTimeout(() => w.animateCharacter(), idx * 350);
-    });
-  }
-
-  function renderFreeButtons(revealed) {
-    const box = document.getElementById('action-buttons');
-    if (!revealed) {
-      box.innerHTML = `
-        <button class="btn" onclick="clearAllCanvases()">全部重写</button>
-        <button class="btn btn-primary" onclick="revealFreeAnswer()">核对答案</button>
-      `;
-    } else {
-      const hasReplay = writers.length > 0 ? `<button class="btn" onclick="replayAllWriters()">重播笔顺</button>` : '';
-      box.innerHTML = `
-        ${hasReplay}
-        <button class="btn btn-wrong" onclick="markResult(false)">写错了</button>
-        <button class="btn btn-right" onclick="markResult(true)">全写对了</button>
-      `;
-    }
-  }
-
-  // ================= 模式 B：整词逐字智能判分 =================
-  function startSequentialQuiz(chars) {
-    writers = [];
-    if (!window.HanziWriter) {
-      document.getElementById('status-text').textContent = "字库脚本未加载，请切换到「盲写自查」模式";
-      return;
-    }
-    chars.forEach((ch, idx) => {
-      const targetId = `writer-${idx}`;
-      document.getElementById(targetId).innerHTML = '';
-      const w = window.HanziWriter.create(targetId, ch, {
-        width: currentGridSize,
-        height: currentGridSize,
-        padding: Math.round(currentGridSize * 0.08),
-        showOutline: false,
-        showCharacter: false,
-        strokeColor: '#222222',
-        highlightColor: '#b83b2a',
-        drawingWidth: Math.max(12, Math.round(currentGridSize / 14)),
-        leniency: 1.45,
-        showHintAfterMisses: 2
-      });
-      writers.push(w);
-    });
-
-    activateQuizForChar(chars, 0);
-  }
-
-  function activateQuizForChar(chars, idx) {
-    chars.forEach((_, i) => {
-      const box = document.getElementById(`grid-box-${i}`);
-      if (box) box.classList.toggle('active-quiz-grid', i === idx);
-    });
-
-    const w = writers[idx];
-    if (!w) return;
-
-    w.quiz({
-      onMistake: function() {
-        quizTotalMistakes++;
-        const statusEl = document.getElementById('status-text');
-        statusEl.textContent = `第 ${idx + 1} 个字笔画有误（本词累计失误 ${quizTotalMistakes} 次）`;
-        statusEl.className = 'status-bar error';
-      },
-      onComplete: function() {
-        if (idx + 1 < chars.length) {
-          quizCharIndex = idx + 1;
-          const statusEl = document.getElementById('status-text');
-          statusEl.textContent = `第 ${idx + 1} 个字完成，请继续写第 ${idx + 2} 个字`;
-          statusEl.className = 'status-bar';
-          activateQuizForChar(chars, idx + 1);
-        } else {
-          document.getElementById(`grid-box-${idx}`)?.classList.remove('active-quiz-grid');
-          const statusEl = document.getElementById('status-text');
-          const passed = quizTotalMistakes <= 1;
-          if (passed) {
-            statusEl.textContent = `🎉 整词「${chars.join('')}」完成！（失误 ${quizTotalMistakes} 次，已掌握）`;
-            statusEl.className = 'status-bar success';
-          } else {
-            statusEl.textContent = `整词完成，累计失误 ${quizTotalMistakes} 次，已加入错题本`;
-            statusEl.className = 'status-bar error';
-          }
-          recordPracticeResult(passed);
-          renderBadgeOnly();
-        }
-      }
-    });
-  }
-
-  function hintCurrentQuizChar() {
-    if (writers[quizCharIndex]) {
-      writers[quizCharIndex].showOutline();
-    }
-  }
-
-  function renderQuizButtons() {
-    const box = document.getElementById('action-buttons');
-    box.innerHTML = `
-      <button class="btn" onclick="hintCurrentQuizChar()">提示当前字</button>
-      <button class="btn" onclick="renderCurrent()">重来</button>
-      <button class="btn btn-primary" onclick="nextWord()">下一个</button>
-    `;
-  }
-
   // ================= 记忆状态与批量导入 =================
-  function renderBadgeOnly() {
-    if (!currentList.length) return;
-    const item = currentList[currentIndex];
-    const rec = records[item.word];
-    const charTagEl = document.getElementById('char-status-tag');
-    if (rec?.status === 'mastered') {
-      charTagEl.textContent = `✓ 已掌握 (对${rec.rightCount}次)`;
-      charTagEl.className = "char-status-tag mastered";
-    } else if (rec?.status === 'wrong') {
-      charTagEl.textContent = `✗ 易错词 (错${rec.wrongCount}次)`;
-      charTagEl.className = "char-status-tag wrong";
-    }
-  }
-
   function recordPracticeResult(isCorrect) {
     if (!currentList.length) return;
     const word = currentList[currentIndex].word;
@@ -1519,19 +1488,11 @@
     renderCurrent();
   }
 
-  function switchMode(mode) {
-    currentMode = mode;
-    document.getElementById('mode-free').classList.toggle('active', mode === 'free');
-    document.getElementById('mode-quiz').classList.toggle('active', mode === 'quiz');
-    saveStateOnly();
-    renderCurrent();
-  }
-
   async function addSingleWord() {
     const input = document.getElementById('custom-input');
     const raw = input.value.trim();
     if (!raw) return;
-    await ensureDictLoaded();
+    await ensureResourcesLoaded();
     const added = importWordsFromText(raw);
     input.value = '';
     if (added > 0) {
@@ -1552,14 +1513,14 @@
 
   async function processBatchImport() {
     const text = document.getElementById('batch-textarea').value;
-    await ensureDictLoaded();
+    await ensureResourcesLoaded();
     const added = importWordsFromText(text);
     document.getElementById('batch-textarea').value = '';
     closeModal('import-modal');
     if (added > 0) {
       document.getElementById('category-select').value = 'all';
       onFilterChange();
-      document.getElementById('status-text').textContent = `🎉 成功批量导入 ${added} 个新词语！`;
+      document.getElementById('status-text').textContent = `🎉 成功导入 ${added} 个新词语并自动匹配释义！`;
     } else {
       alert('未检测到新的有效中文词语（已自动跳过重复词）');
     }
@@ -1575,12 +1536,12 @@
       if (!cleanWord || cleanWord.length > 8) return;
       if (!existingSet.has(cleanWord)) {
         existingSet.add(cleanWord);
-        const dictExp = dictMap ? dictMap.get(cleanWord) : '';
+        const dictExp = ciMap ? ciMap.get(cleanWord) : '';
         wordList.unshift({
           word: cleanWord,
           py: generatePinyinSafe(cleanWord),
           cat: '手动添加',
-          meaning: dictExp || '自定义导入词语'
+          meaning: dictExp || ''
         });
         addedCount++;
       }
@@ -1605,6 +1566,7 @@
         wordList = parsed.words;
         records = parsed.records;
         saveToStorage();
+        enrichMissingMeanings();
         applyFilter(false);
         closeModal('backup-modal');
         alert('学习记录恢复成功！');
@@ -1617,7 +1579,7 @@
   }
 
   function resetAllData() {
-    if (confirm('确定清空所有练习记录并恢复初始词库吗？')) {
+    if (confirm('确定清空所有练习记录并恢复初始状态吗？')) {
       localStorage.removeItem('tbwz_words_v9');
       localStorage.removeItem('tbwz_records_v9');
       localStorage.removeItem('tbwz_state_v9');
@@ -1626,6 +1588,7 @@
       loadFromStorage();
       document.getElementById('category-select').value = 'all';
       applyFilter(false);
+      enrichMissingMeanings();
       closeModal('backup-modal');
     }
   }
