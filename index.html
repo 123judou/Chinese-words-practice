@@ -333,7 +333,7 @@
     .diagonal-1 { transform: rotate(45deg); }
     .diagonal-2 { transform: rotate(-45deg); }
 
-    .free-canvas, .writer-target {
+    .free-canvas, .writer-target, .fallback-red-char {
       position: absolute;
       top: 0;
       left: 0;
@@ -341,7 +341,20 @@
       height: 100%;
     }
     .free-canvas { z-index: 3; cursor: crosshair; touch-action: none; }
-    .writer-target { z-index: 2; }
+    .writer-target { z-index: 4; pointer-events: none; }
+
+    /* 离线/平板兜底半透明红字楷体叠层 */
+    .fallback-red-char {
+      z-index: 4;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "STKaiti", "KaiTi", "Kaiti SC", "DFKai-SB", "BiauKai", serif;
+      color: rgba(184, 59, 42, 0.45);
+      user-select: none;
+      line-height: 1;
+    }
 
     .status-bar {
       margin-top: 14px;
@@ -431,7 +444,7 @@
 
     .modal-box textarea {
       width: 100%;
-      height: 120px;
+      height: 140px;
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 10px;
@@ -656,8 +669,8 @@
 <div class="modal-mask" id="import-modal">
   <div class="modal-box">
     <h3>批量导入整词词库</h3>
-    <p>粘贴中文词语（用空格、逗号或换行隔开均可）。已存在的词会自动跳过不重复导入。</p>
-    <textarea id="batch-textarea" placeholder="例如：&#10;单薄 单于 落枕 丢三落四&#10;迫不及待 鬼鬼祟祟 声名狼藉"></textarea>
+    <p>粘贴中文词语（支持空格、逗号或换行分隔，可一次粘贴上千词）。已存在的词会自动跳过不重复导入。</p>
+    <textarea id="batch-textarea" placeholder="将 TXT 里的词语复制粘贴到这里..."></textarea>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('import-modal')">取消</button>
       <button class="btn btn-primary" onclick="processBatchImport()">确认导入</button>
@@ -683,9 +696,7 @@
 </div>
 
 <script>
-  // 120个高频日常用语精选库（自带准确拼音，离线/平板弱网也能100%秒出拼音）
   const DAILY_WORDS = [
-    // 日常情绪与状态
     { word: "尴尬", py: "gān gà", cat: "日常情绪", meaning: "处境困难，不好处理；神色、态度不自然" },
     { word: "犹豫", py: "yóu yù", cat: "日常情绪", meaning: "拿不定主意" },
     { word: "委屈", py: "wěi qu", cat: "日常情绪", meaning: "受到不应该有的指责或待遇，心里难过" },
@@ -707,7 +718,6 @@
     { word: "执拗", py: "zhí niù", cat: "日常情绪", meaning: "固执任性，不听从别人的意见" },
     { word: "倔强", py: "jué jiàng", cat: "日常情绪", meaning: "（性情）刚强不屈" },
 
-    // 身体与动作
     { word: "喷嚏", py: "pēn tì", cat: "身体动作", meaning: "鼻黏膜受刺激引起的急剧吸气和喷气" },
     { word: "咳嗽", py: "ké sou", cat: "身体动作", meaning: "呼吸道受刺激而突然向外冲气发声" },
     { word: "膝盖", py: "xī gài", cat: "身体动作", meaning: "大腿和小腿相连的关节前部" },
@@ -729,7 +739,6 @@
     { word: "蹒跚", py: "pán shān", cat: "身体动作", meaning: "腿脚不灵便，走路缓慢、摇摆的样子" },
     { word: "落枕", py: "lào zhěn", cat: "身体动作", meaning: "睡眠时因枕头不合适或受凉而引起的颈部疼痛" },
 
-    // 居家与生活物品
     { word: "钥匙", py: "yào shi", cat: "居家生活", meaning: "开锁的工具，或比喻解决问题的方法" },
     { word: "抽屉", py: "chōu ti", cat: "居家生活", meaning: "桌子、柜子等家具中可抽动的匣子" },
     { word: "枕头", py: "zhěn tou", cat: "居家生活", meaning: "躺着时垫在头下的东西" },
@@ -751,7 +760,6 @@
     { word: "镜子", py: "jìng zi", cat: "居家生活", meaning: "表面光滑、能反射出人或物像的器具" },
     { word: "牙刷", py: "yá shuā", cat: "居家生活", meaning: "刷牙用的小刷子" },
 
-    // 饮食与果蔬
     { word: "饺子", py: "jiǎo zi", cat: "饮食果蔬", meaning: "半圆形的有馅面食" },
     { word: "馄饨", py: "hún tun", cat: "饮食果蔬", meaning: "用薄面皮包肉馅煮熟的食物，通常带汤" },
     { word: "馒头", py: "mán tou", cat: "饮食果蔬", meaning: "用发酵的面粉蒸成的食品，一般没有馅" },
@@ -773,7 +781,6 @@
     { word: "番茄", py: "fān qié", cat: "饮食果蔬", meaning: "西红柿" },
     { word: "麻辣烫", py: "má là tàng", cat: "饮食果蔬", meaning: "把各种食材放进麻辣汤底中煮熟的小吃" },
 
-    // 社交与书面高频
     { word: "寒暄", py: "hán xuān", cat: "社交职场", meaning: "见面时谈天气冷暖之类的应酬话" },
     { word: "殷勤", py: "yīn qín", cat: "社交职场", meaning: "热情而周到" },
     { word: "揣摩", py: "chuǎi mó", cat: "社交职场", meaning: "反复思考推求" },
@@ -795,7 +802,6 @@
     { word: "熟悉", py: "shú xī", cat: "社交职场", meaning: "知道得很清楚" },
     { word: "纯粹", py: "chún cuì", cat: "社交职场", meaning: "不掺杂别的成分" },
 
-    // 高频易错成语
     { word: "迫不及待", py: "pò bù jí dài", cat: "高频成语", meaning: "急迫得不能再等待" },
     { word: "再接再厉", py: "zài jiē zài lì", cat: "高频成语", meaning: "一次又一次地继续努力" },
     { word: "一筹莫展", py: "yī chóu mò zhǎn", cat: "高频成语", meaning: "一点计策也施展不出，形容毫无办法" },
@@ -841,14 +847,14 @@
     document.getElementById('category-select').value = currentFilter;
     applyFilter(true);
     window.addEventListener('resize', () => {
-      if (currentList.length > 0) renderCurrent();
+      if (currentList.length > 0 && !isRevealed) renderCurrent();
     });
   }
 
   function loadFromStorage() {
-    const savedWords = localStorage.getItem('tbwz_words_v8');
-    const savedRecords = localStorage.getItem('tbwz_records_v8');
-    const savedState = localStorage.getItem('tbwz_state_v8');
+    const savedWords = localStorage.getItem('tbwz_words_v9');
+    const savedRecords = localStorage.getItem('tbwz_records_v9');
+    const savedState = localStorage.getItem('tbwz_state_v9');
 
     wordList = savedWords ? JSON.parse(savedWords) : [...DAILY_WORDS];
     records = savedRecords ? JSON.parse(savedRecords) : {};
@@ -865,14 +871,14 @@
   }
 
   function saveToStorage() {
-    localStorage.setItem('tbwz_words_v8', JSON.stringify(wordList));
-    localStorage.setItem('tbwz_records_v8', JSON.stringify(records));
+    localStorage.setItem('tbwz_words_v9', JSON.stringify(wordList));
+    localStorage.setItem('tbwz_records_v9', JSON.stringify(records));
     saveStateOnly();
     updateStatsUI();
   }
 
   function saveStateOnly() {
-    localStorage.setItem('tbwz_state_v8', JSON.stringify({
+    localStorage.setItem('tbwz_state_v9', JSON.stringify({
       filter: currentFilter,
       index: currentIndex,
       mode: currentMode
@@ -967,9 +973,7 @@
   }
 
   function getWordPinyin(item) {
-    // 1. 优先使用自带的离线准确拼音（100%秒显示，不受平板网络影响）
     if (item.py) return item.py;
-    // 2. 否则尝试调用拼音库动态生成
     if (window.pinyinPro && typeof window.pinyinPro.pinyin === 'function') {
       try {
         return window.pinyinPro.pinyin(item.word, { toneType: 'symbol' });
@@ -1065,7 +1069,7 @@
     }
   }
 
-  // ================= 词典扩充逻辑（读取 ci.json） =================
+  // ================= 词典扩充逻辑 =================
   function getExistingWordsSet() {
     const set = new Set(wordList.map(w => w.word));
     Object.keys(records).forEach(w => set.add(w));
@@ -1100,9 +1104,11 @@
       dictData.forEach(entry => dictMap.set(entry.ci, entry.explanation || ''));
       return true;
     } catch (err) {
-      listEl.innerHTML = `<div style="text-align:center; padding:30px 12px; color:var(--accent); font-size:13px;">
-        读取 ci.json 失败，可直接使用内置的 120 个日常用语词库或手动添加词语。
-      </div>`;
+      if (listEl) {
+        listEl.innerHTML = `<div style="text-align:center; padding:30px 12px; color:var(--accent); font-size:13px;">
+          读取 ci.json 失败，可直接使用批量导入粘贴词库。
+        </div>`;
+      }
       return false;
     }
   }
@@ -1248,7 +1254,7 @@
     }
   }
 
-  // ================= 模式 A：整词盲写自由手写 =================
+  // ================= 模式 A：整词盲写自由手写（双层红字对比保障） =================
   function bindCanvasEvents(cvs) {
     const ctx = cvs.getContext('2d');
     ctx.lineWidth = Math.max(4, Math.round(currentGridSize / 35));
@@ -1304,6 +1310,11 @@
     });
   }
 
+  // 渲染兜底楷体半透明红字（当 HanziWriter 外链受限时确保红字依然 100% 叠加上去）
+  function renderFallbackRedChar(targetEl, ch) {
+    targetEl.innerHTML = `<div class="fallback-red-char" style="font-size:${Math.round(currentGridSize * 0.78)}px;">${ch}</div>`;
+  }
+
   function revealFreeAnswer() {
     if (!currentList.length) return;
     const item = currentList[currentIndex];
@@ -1313,19 +1324,35 @@
 
     chars.forEach((ch, idx) => {
       const targetId = `writer-${idx}`;
-      document.getElementById(targetId).innerHTML = '';
+      const targetEl = document.getElementById(targetId);
+      targetEl.innerHTML = '';
+
       if (window.HanziWriter) {
-        const w = window.HanziWriter.create(targetId, ch, {
-          width: currentGridSize,
-          height: currentGridSize,
-          padding: Math.round(currentGridSize * 0.08),
-          strokeColor: 'rgba(184, 59, 42, 0.45)',
-          outlineColor: 'rgba(184, 59, 42, 0.12)',
-          strokeAnimationSpeed: 1.3,
-          delayBetweenStrokes: 120
-        });
-        writers.push(w);
-        setTimeout(() => w.animateCharacter(), idx * 350);
+        // 先放一层兜底红字，等 HanziWriter 数据加载成功后再替换成动态笔顺红字
+        renderFallbackRedChar(targetEl, ch);
+        try {
+          const w = window.HanziWriter.create(targetId, ch, {
+            width: currentGridSize,
+            height: currentGridSize,
+            padding: Math.round(currentGridSize * 0.08),
+            strokeColor: 'rgba(184, 59, 42, 0.48)',
+            outlineColor: 'rgba(184, 59, 42, 0.14)',
+            strokeAnimationSpeed: 1.3,
+            delayBetweenStrokes: 120,
+            onLoadCharDataSuccess: function() {
+              // 笔顺数据加载成功，移除静态兜底文字，播放动态笔顺
+              const fallback = targetEl.querySelector('.fallback-red-char');
+              if (fallback) fallback.remove();
+            }
+          });
+          writers.push(w);
+          setTimeout(() => w.animateCharacter(), idx * 350);
+        } catch (e) {
+          renderFallbackRedChar(targetEl, ch);
+        }
+      } else {
+        // 平板弱网未加载出外部笔顺库时，直接显示半透明朱砂红楷体叠加对比
+        renderFallbackRedChar(targetEl, ch);
       }
     });
 
@@ -1347,8 +1374,9 @@
         <button class="btn btn-primary" onclick="revealFreeAnswer()">核对答案</button>
       `;
     } else {
+      const hasReplay = writers.length > 0 ? `<button class="btn" onclick="replayAllWriters()">重播笔顺</button>` : '';
       box.innerHTML = `
-        <button class="btn" onclick="replayAllWriters()">重播笔顺</button>
+        ${hasReplay}
         <button class="btn btn-wrong" onclick="markResult(false)">写错了</button>
         <button class="btn btn-right" onclick="markResult(true)">全写对了</button>
       `;
@@ -1359,7 +1387,7 @@
   function startSequentialQuiz(chars) {
     writers = [];
     if (!window.HanziWriter) {
-      document.getElementById('status-text').textContent = "字库脚本加载中，请稍候或切换盲写模式";
+      document.getElementById('status-text').textContent = "字库脚本未加载，请切换到「盲写自查」模式";
       return;
     }
     chars.forEach((ch, idx) => {
@@ -1589,10 +1617,10 @@
   }
 
   function resetAllData() {
-    if (confirm('确定清空所有练习记录并恢复 120 个日常用语词库吗？')) {
-      localStorage.removeItem('tbwz_words_v8');
-      localStorage.removeItem('tbwz_records_v8');
-      localStorage.removeItem('tbwz_state_v8');
+    if (confirm('确定清空所有练习记录并恢复初始词库吗？')) {
+      localStorage.removeItem('tbwz_words_v9');
+      localStorage.removeItem('tbwz_records_v9');
+      localStorage.removeItem('tbwz_state_v9');
       currentFilter = 'all';
       currentIndex = 0;
       loadFromStorage();
