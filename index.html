@@ -76,24 +76,61 @@
       display: flex;
       gap: 6px;
       align-items: center;
+      flex-wrap: wrap;
     }
 
-    /* 两行极简使用说明 */
+    /* 详细玩法说明（支持展开/收起） */
     .usage-guide {
       background: #f1efe9;
       border-radius: 10px;
-      padding: 8px 12px;
+      padding: 9px 12px;
       font-size: 12px;
       color: var(--sub);
-      line-height: 1.55;
+      line-height: 1.6;
     }
 
-    .usage-guide strong {
+    .usage-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3px;
+    }
+
+    .usage-header strong {
+      color: var(--text);
+      font-size: 12.5px;
+    }
+
+    .usage-toggle {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-size: 12px;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .usage-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .usage-list li strong {
       color: var(--text);
       font-weight: 500;
     }
 
-    /* 进度与练习时间统计栏 */
+    .usage-extra {
+      display: none;
+    }
+
+    .usage-guide.expanded .usage-extra {
+      display: block;
+    }
+
+    /* 进度、今日分数与练习时间统计栏 */
     .overall-progress {
       background: var(--card);
       border: 1px solid var(--border);
@@ -117,17 +154,23 @@
     .time-stats {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       color: var(--text);
       font-variant-numeric: tabular-nums;
+      flex-wrap: wrap;
     }
 
-    .time-pill {
+    .stat-pill {
       background: var(--accent-light);
       color: var(--accent);
       padding: 1px 7px;
       border-radius: 6px;
       font-weight: 500;
+    }
+
+    .stat-pill.green {
+      background: var(--green-light);
+      color: var(--green);
     }
 
     .progress-bar-bg {
@@ -198,6 +241,19 @@
       font-weight: 600;
     }
 
+    .btn-wrong-book {
+      background: #fff8f6;
+      color: var(--accent);
+      border-color: #f0c0b8;
+      font-weight: 600;
+    }
+
+    .btn-wrong-book.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
     .control-row {
       display: flex;
       justify-content: space-between;
@@ -217,6 +273,24 @@
       color: var(--text);
       outline: none;
       cursor: pointer;
+    }
+
+    /* 错题本专属提示条 */
+    .wrong-banner {
+      display: none;
+      background: var(--accent-light);
+      border: 1px solid #f5c6c0;
+      color: var(--accent);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 12.5px;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .wrong-banner.show {
+      display: flex;
     }
 
     .card {
@@ -559,25 +633,35 @@
   <header>
     <h1>提笔忘字 <span class="badge" id="progress-badge">1 / 120</span></h1>
     <div class="header-actions">
+      <button class="btn btn-wrong-book" id="wrong-book-btn" onclick="toggleWrongBook()">📕 错题本 (0)</button>
       <button class="btn btn-dict" onclick="openDictModal()">📖 词库抽词</button>
       <button class="btn" onclick="openImportModal()">批量导入</button>
       <button class="btn" onclick="openBackupModal()">备份</button>
     </div>
   </header>
 
-  <!-- 1. 两行极简使用说明 -->
-  <div class="usage-guide">
-    <strong>玩法说明：</strong>① 根据拼音与释义在田字格内手写完整词语（写错可点“撤回一笔”）；<br>
-    ② 写完点击<strong>「核对答案」</strong>叠加红字对比笔顺与字形，自评对错后自动归入已掌握或错题本。
+  <!-- 1. 完整玩法说明（覆盖抽词、今日得分、错题本、批量导入） -->
+  <div class="usage-guide" id="usage-guide">
+    <div class="usage-header">
+      <strong>💡 网站玩法指南</strong>
+      <button class="usage-toggle" id="usage-toggle-btn" onclick="toggleUsageGuide()">展开全部说明 ▾</button>
+    </div>
+    <ul class="usage-list">
+      <li><strong>① 盲写与核对：</strong>看拼音与释义在田字格手写（写错可点“撤回一笔”），点<strong>「核对答案」</strong>叠加红字自查，标记对错。</li>
+      <li><strong>② 错题本专练：</strong>标为“写错了”的词自动存入顶部<strong>「📕 错题本」</strong>；在错题本里重新写对后自动移出。</li>
+      <li class="usage-extra"><strong>③ 词库抽词：</strong>点击顶部<strong>「📖 词库抽词」</strong>，可从 1000 常用词库或全量词典中按字数、关键词或自定义数量随机抽题（自动去重）。</li>
+      <li class="usage-extra"><strong>④ 今日得分与导入：</strong>上方实时记录<strong>今日答对得分</strong>与<strong>练习时长</strong>；点<strong>「批量导入」</strong>可粘贴任意词语（空格/换行分隔），自动匹配释义加入练习。</li>
+    </ul>
   </div>
 
-  <!-- 2. 进度与练习时间记录 -->
+  <!-- 2. 进度、今日练习分数与时间统计 -->
   <div class="overall-progress">
     <div class="progress-top">
-      <span id="mastered-summary">已掌握：0 / 120 词 (0%)</span>
+      <span id="mastered-summary">总掌握：0 / 120 词 (0%)</span>
       <div class="time-stats">
-        <span>今日练习 <span class="time-pill" id="today-time-text">0分00秒</span></span>
-        <span style="color:var(--sub);" id="total-time-text">累计 0分钟</span>
+        <span>今日得分 <span class="stat-pill green" id="today-score-text">0 分 (对0/练0)</span></span>
+        <span>今日时长 <span class="stat-pill" id="today-time-text">0分00秒</span></span>
+        <span style="color:var(--sub);" id="total-time-text">累计 0分</span>
       </div>
     </div>
     <div class="progress-bar-bg">
@@ -605,6 +689,12 @@
       <option value="高频成语">高频易错成语</option>
       <option value="手动添加">手动添加</option>
     </select>
+  </div>
+
+  <!-- 错题本专属提示条 -->
+  <div class="wrong-banner" id="wrong-banner">
+    <span>📕 当前处于<strong>错题本</strong>模式：点“全写对了”将自动移出错题本</span>
+    <button class="btn" style="padding:3px 8px; font-size:12px;" onclick="exitWrongBook()">退出错题本</button>
   </div>
 
   <div class="card" id="main-card">
@@ -680,7 +770,7 @@
 <div class="modal-mask" id="backup-modal">
   <div class="modal-box">
     <h3>学习记录备份与同步</h3>
-    <p>练习记录与练习时长保存在当前设备的浏览器中。如需换设备，可复制下方数据保存或粘贴恢复。</p>
+    <p>练习记录、错题本与今日得分保存在当前设备的浏览器中。如需换设备，可复制下方数据保存或粘贴恢复。</p>
     <textarea id="backup-textarea" placeholder="点击下方“导出记录”生成备份代码，或粘贴已有代码点击“恢复记录”"></textarea>
     <div class="modal-footer" style="justify-content: space-between;">
       <button class="link-btn" onclick="resetAllData()">清空重置</button>
@@ -834,15 +924,16 @@
   let isRevealed = false;
   let currentGridSize = 180;
 
-  // 练习时间记录状态
-  let timeStats = {
+  // 今日练习时间与今日得分统计
+  let dailyStats = {
     todayDate: '',
     todaySeconds: 0,
-    totalSeconds: 0
+    totalSeconds: 0,
+    todayRight: 0,
+    todayTotal: 0
   };
   let timerInterval = null;
 
-  // 外部文件缓存
   let ciData = null;
   let ciMap = null;
   let thousandWordsData = null;
@@ -858,6 +949,13 @@
     });
     await ensureResourcesLoaded();
     enrichMissingMeanings();
+  }
+
+  function toggleUsageGuide() {
+    const guide = document.getElementById('usage-guide');
+    const btn = document.getElementById('usage-toggle-btn');
+    const isExpanded = guide.classList.toggle('expanded');
+    btn.textContent = isExpanded ? '收起说明 ▴' : '展开全部说明 ▾';
   }
 
   function getTodayDateStr() {
@@ -876,12 +974,17 @@
 
     const todayStr = getTodayDateStr();
     if (savedTime) {
-      const parsedTime = JSON.parse(savedTime);
-      timeStats.totalSeconds = parsedTime.totalSeconds || 0;
-      timeStats.todayDate = todayStr;
-      timeStats.todaySeconds = parsedTime.todayDate === todayStr ? (parsedTime.todaySeconds || 0) : 0;
+      const parsed = JSON.parse(savedTime);
+      const isSameDay = parsed.todayDate === todayStr;
+      dailyStats = {
+        todayDate: todayStr,
+        todaySeconds: isSameDay ? (parsed.todaySeconds || 0) : 0,
+        totalSeconds: parsed.totalSeconds || 0,
+        todayRight: isSameDay ? (parsed.todayRight || 0) : 0,
+        todayTotal: isSameDay ? (parsed.todayTotal || 0) : 0
+      };
     } else {
-      timeStats = { todayDate: todayStr, todaySeconds: 0, totalSeconds: 0 };
+      dailyStats = { todayDate: todayStr, todaySeconds: 0, totalSeconds: 0, todayRight: 0, todayTotal: 0 };
     }
 
     if (savedState) {
@@ -890,7 +993,7 @@
       currentIndex = state.index || 0;
     }
     updateStatsUI();
-    updateTimeUI();
+    updateDailyStatsUI();
   }
 
   function saveToStorage() {
@@ -907,43 +1010,48 @@
     }));
   }
 
-  function saveTimeStats() {
-    localStorage.setItem('tbwz_time_v9', JSON.stringify(timeStats));
+  function saveDailyStats() {
+    localStorage.setItem('tbwz_time_v9', JSON.stringify(dailyStats));
   }
 
-  // 智能前台计时器（仅页面可见时走表，切后台自动暂停）
   function startPracticeTimer() {
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(() => {
       if (document.visibilityState === 'visible') {
         const todayStr = getTodayDateStr();
-        if (timeStats.todayDate !== todayStr) {
-          timeStats.todayDate = todayStr;
-          timeStats.todaySeconds = 0;
+        if (dailyStats.todayDate !== todayStr) {
+          dailyStats.todayDate = todayStr;
+          dailyStats.todaySeconds = 0;
+          dailyStats.todayRight = 0;
+          dailyStats.todayTotal = 0;
         }
-        timeStats.todaySeconds += 1;
-        timeStats.totalSeconds += 1;
-        updateTimeUI();
-        if (timeStats.todaySeconds % 5 === 0) {
-          saveTimeStats();
+        dailyStats.todaySeconds += 1;
+        dailyStats.totalSeconds += 1;
+        updateDailyStatsUI();
+        if (dailyStats.todaySeconds % 5 === 0) {
+          saveDailyStats();
         }
       }
     }, 1000);
 
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
-        saveTimeStats();
+        saveDailyStats();
       }
     });
   }
 
-  function updateTimeUI() {
-    const mins = Math.floor(timeStats.todaySeconds / 60);
-    const secs = timeStats.todaySeconds % 60;
+  function updateDailyStatsUI() {
+    const mins = Math.floor(dailyStats.todaySeconds / 60);
+    const secs = dailyStats.todaySeconds % 60;
     document.getElementById('today-time-text').textContent = `${mins}分${String(secs).padStart(2, '0')}秒`;
 
-    const totalMins = Math.floor(timeStats.totalSeconds / 60);
-    document.getElementById('total-time-text').textContent = `累计 ${totalMins}分钟`;
+    const totalMins = Math.floor(dailyStats.totalSeconds / 60);
+    document.getElementById('total-time-text').textContent = `累计 ${totalMins}分`;
+
+    // 今日得分：每写对 1 词计 10 分
+    const score = dailyStats.todayRight * 10;
+    document.getElementById('today-score-text').textContent = `${score} 分 (对${dailyStats.todayRight}/练${dailyStats.todayTotal})`;
   }
 
   function enrichMissingMeanings() {
@@ -979,7 +1087,7 @@
     const unpracticedCount = Math.max(0, total - masteredCount - wrongCount);
     const percent = total > 0 ? Math.round((masteredCount / total) * 100) : 0;
 
-    document.getElementById('mastered-summary').textContent = `已掌握：${masteredCount} / ${total} 词 (${percent}%)`;
+    document.getElementById('mastered-summary').textContent = `总掌握：${masteredCount} / ${total} 词 (${percent}%)`;
     document.getElementById('mastered-bar').style.width = `${percent}%`;
 
     const sel = document.getElementById('category-select');
@@ -987,6 +1095,28 @@
     sel.options[1].text = `未练习的新词 (${unpracticedCount})`;
     sel.options[2].text = `错题本 (${wrongCount})`;
     sel.options[3].text = `已掌握 (${masteredCount})`;
+
+    // 同步更新顶部独立的「📕 错题本」按钮状态与数量
+    const wrongBtn = document.getElementById('wrong-book-btn');
+    wrongBtn.textContent = `📕 错题本 (${wrongCount})`;
+    wrongBtn.classList.toggle('active', currentFilter === 'wrong');
+    document.getElementById('wrong-banner').classList.toggle('show', currentFilter === 'wrong');
+  }
+
+  // 顶部「📕 错题本」快捷切换
+  function toggleWrongBook() {
+    const sel = document.getElementById('category-select');
+    if (currentFilter === 'wrong') {
+      sel.value = 'all';
+    } else {
+      sel.value = 'wrong';
+    }
+    onFilterChange();
+  }
+
+  function exitWrongBook() {
+    document.getElementById('category-select').value = 'all';
+    onFilterChange();
   }
 
   async function onFilterChange() {
@@ -1015,6 +1145,7 @@
         }
       }
     }
+    updateStatsUI();
     applyFilter(false);
   }
 
@@ -1100,12 +1231,16 @@
 
     if (currentList.length === 0) {
       charTagEl.style.display = 'none';
-      document.getElementById('category-tag').textContent = "提示";
-      document.getElementById('pinyin-text').textContent = "当前列表为空";
-      document.getElementById('meaning-text').textContent = "可切换其他分类，或点击右上角“词库抽词”";
+      document.getElementById('category-tag').textContent = currentFilter === 'wrong' ? "错题本已清空" : "提示";
+      document.getElementById('pinyin-text').textContent = currentFilter === 'wrong' ? "🎉 太棒了，没有错题啦" : "当前列表为空";
+      document.getElementById('meaning-text').textContent = currentFilter === 'wrong'
+        ? "所有易错词都已攻克，点击“退出错题本”继续练习新词"
+        : "可切换其他分类，或点击右上角“词库抽词”";
       document.getElementById('progress-badge').textContent = "0 / 0";
       statusEl.textContent = "";
-      document.getElementById('action-buttons').innerHTML = '';
+      document.getElementById('action-buttons').innerHTML = currentFilter === 'wrong'
+        ? `<button class="btn btn-primary" style="max-width:200px;" onclick="exitWrongBook()">返回全部词库</button>`
+        : '';
       return;
     }
 
@@ -1548,13 +1683,23 @@
     }
   }
 
-  // ================= 记忆状态与批量导入 =================
+  // ================= 记忆状态、今日得分与错题本更新 =================
   function recordPracticeResult(isCorrect) {
     if (!currentList.length) return;
     const word = currentList[currentIndex].word;
     const prev = records[word] || { status: 'new', rightCount: 0, wrongCount: 0 };
 
+    const todayStr = getTodayDateStr();
+    if (dailyStats.todayDate !== todayStr) {
+      dailyStats.todayDate = todayStr;
+      dailyStats.todaySeconds = 0;
+      dailyStats.todayRight = 0;
+      dailyStats.todayTotal = 0;
+    }
+    dailyStats.todayTotal += 1;
+
     if (isCorrect) {
+      dailyStats.todayRight += 1;
       records[word] = {
         status: 'mastered',
         rightCount: prev.rightCount + 1,
@@ -1567,6 +1712,8 @@
         wrongCount: prev.wrongCount + 1
       };
     }
+    saveDailyStats();
+    updateDailyStatsUI();
     saveToStorage();
   }
 
@@ -1650,7 +1797,7 @@
   }
 
   function exportBackup() {
-    const data = JSON.stringify({ words: wordList, records: records, timeStats: timeStats });
+    const data = JSON.stringify({ words: wordList, records: records, dailyStats: dailyStats });
     document.getElementById('backup-textarea').value = data;
     document.getElementById('backup-textarea').select();
   }
@@ -1663,10 +1810,10 @@
       if (parsed.words && parsed.records) {
         wordList = parsed.words;
         records = parsed.records;
-        if (parsed.timeStats) {
-          timeStats = parsed.timeStats;
-          saveTimeStats();
-          updateTimeUI();
+        if (parsed.dailyStats) {
+          dailyStats = parsed.dailyStats;
+          saveDailyStats();
+          updateDailyStatsUI();
         }
         saveToStorage();
         enrichMissingMeanings();
@@ -1682,7 +1829,7 @@
   }
 
   function resetAllData() {
-    if (confirm('确定清空所有练习记录、练习时长并恢复初始状态吗？')) {
+    if (confirm('确定清空所有练习记录、错题本与今日得分并恢复初始状态吗？')) {
       localStorage.removeItem('tbwz_words_v9');
       localStorage.removeItem('tbwz_records_v9');
       localStorage.removeItem('tbwz_state_v9');
