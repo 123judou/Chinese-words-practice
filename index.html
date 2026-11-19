@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>提笔忘字 · 随手练</title>
+  <title>提笔忘字 · 整词随手练</title>
   <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.19.6/dist/index.js"></script>
   <style>
@@ -35,12 +35,12 @@
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
-      padding: 16px 16px 40px;
+      padding: 16px 14px 40px;
     }
 
     .container {
       width: 100%;
-      max-width: 450px;
+      max-width: 580px;
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -206,14 +206,13 @@
       background: var(--card);
       border-radius: 16px;
       border: 1px solid var(--border);
-      padding: 18px 20px;
+      padding: 20px 16px;
       display: flex;
       flex-direction: column;
       align-items: center;
       box-shadow: 0 4px 16px rgba(0,0,0,0.03);
     }
 
-    /* 卡片右上角记忆状态标签 */
     .char-status-tag {
       position: absolute;
       top: 14px;
@@ -237,48 +236,54 @@
 
     .prompt-area {
       text-align: center;
-      margin-bottom: 14px;
+      margin-bottom: 18px;
       width: 100%;
+      padding: 0 12px;
     }
 
     .tag-line {
       font-size: 11px;
       color: var(--sub);
-      margin-bottom: 4px;
-    }
-
-    .pinyin {
-      font-size: 20px;
-      color: var(--accent);
-      font-weight: 600;
-      letter-spacing: 1px;
-      margin-bottom: 4px;
-    }
-
-    .word-mask {
-      font-size: 24px;
-      font-weight: 600;
-      letter-spacing: 3px;
       margin-bottom: 6px;
     }
 
-    .meaning {
-      font-size: 13px;
-      color: var(--sub);
-      line-height: 1.4;
-      min-height: 18px;
+    .pinyin {
+      font-size: 26px;
+      color: var(--accent);
+      font-weight: 600;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
     }
 
-    /* 田字格 */
+    .meaning {
+      font-size: 15px;
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 22px;
+    }
+
+    /* 多字田字格横向容器 */
+    .grids-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      margin: 4px 0;
+    }
+
     .grid-wrapper {
       position: relative;
-      width: 260px;
-      height: 260px;
       border: 2px solid var(--accent);
       background-color: #fffdf9;
       border-radius: 8px;
       overflow: hidden;
       touch-action: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .grid-wrapper.active-quiz-grid {
+      box-shadow: 0 0 0 3px rgba(184, 59, 42, 0.2);
     }
 
     .grid-wrapper::before {
@@ -318,18 +323,18 @@
     .diagonal-1 { transform: rotate(45deg); }
     .diagonal-2 { transform: rotate(-45deg); }
 
-    #free-canvas, #writer-target {
+    .free-canvas, .writer-target {
       position: absolute;
       top: 0;
       left: 0;
-      width: 260px;
-      height: 260px;
+      width: 100%;
+      height: 100%;
     }
-    #free-canvas { z-index: 3; cursor: crosshair; }
-    #writer-target { z-index: 2; }
+    .free-canvas { z-index: 3; cursor: crosshair; }
+    .writer-target { z-index: 2; }
 
     .status-bar {
-      margin-top: 12px;
+      margin-top: 14px;
       font-size: 13px;
       color: var(--sub);
       height: 20px;
@@ -344,6 +349,7 @@
       gap: 10px;
       margin-top: 14px;
       width: 100%;
+      max-width: 420px;
       justify-content: center;
     }
 
@@ -432,7 +438,7 @@
 
 <div class="container">
   <header>
-    <h1>提笔忘字 <span class="badge" id="progress-badge">1 / 80</span></h1>
+    <h1>提笔忘字 <span class="badge" id="progress-badge">1 / 60</span></h1>
     <div class="header-actions">
       <button class="btn" onclick="openImportModal()">批量导入</button>
       <button class="btn" onclick="openBackupModal()">备份</button>
@@ -442,7 +448,7 @@
   <!-- 记忆总进度条 -->
   <div class="overall-progress">
     <div class="progress-top">
-      <span id="mastered-summary">已掌握：0 / 80 字</span>
+      <span id="mastered-summary">已掌握：0 / 60 词</span>
       <span id="mastered-percent">0%</span>
     </div>
     <div class="progress-bar-bg">
@@ -452,7 +458,7 @@
 
   <!-- 单个添加 -->
   <div class="toolbar">
-    <input type="text" id="custom-input" placeholder="输入想练的词或字（如：打喷嚏）" maxlength="12" />
+    <input type="text" id="custom-input" placeholder="输入想练的完整词语（如：尴尬、迫不及待）" maxlength="8" />
     <button class="btn btn-primary" onclick="addSingleWord()">+ 添加</button>
   </div>
 
@@ -460,13 +466,13 @@
   <div class="control-row">
     <select class="category-select" id="category-select" onchange="onFilterChange()">
       <option value="all">全部词库</option>
-      <option value="unpracticed">未练习的新字 (0)</option>
+      <option value="unpracticed">未练习的新词 (0)</option>
       <option value="wrong">错题本 (0)</option>
       <option value="mastered">已掌握 (0)</option>
       <option value="日常高频">日常高频</option>
       <option value="生活物品">生活物品</option>
       <option value="易错成语">易错成语</option>
-      <option value="易错结构">易错结构/笔顺</option>
+      <option value="易错结构">易错结构/形近</option>
       <option value="自定义">我的自定义</option>
     </select>
 
@@ -483,33 +489,28 @@
     <div class="prompt-area">
       <div class="tag-line" id="category-tag">日常高频</div>
       <div class="pinyin" id="pinyin-text">gān gà</div>
-      <div class="word-mask" id="word-text">【 】尬</div>
-      <div class="meaning" id="meaning-text">处境困难，不好处理</div>
+      <div class="meaning" id="meaning-text">处境困难，不好处理；神色、态度不自然</div>
     </div>
 
-    <div class="grid-wrapper">
-      <div class="diagonal-1"></div>
-      <div class="diagonal-2"></div>
-      <div id="writer-target"></div>
-      <canvas id="free-canvas" width="260" height="260"></canvas>
-    </div>
+    <!-- 动态生成多个田字格 -->
+    <div class="grids-container" id="grids-container"></div>
 
-    <div class="status-bar" id="status-text">请在田字格内盲写，写完点击核对</div>
+    <div class="status-bar" id="status-text">请在田字格内写出完整词语，写完点击核对</div>
     <div class="actions" id="action-buttons"></div>
   </div>
 
   <div class="footer-info">
     <button class="link-btn" onclick="shuffleCurrentList()">🔀 打乱顺序</button>
-    <button class="link-btn" onclick="nextChar()">跳过此字 →</button>
+    <button class="link-btn" onclick="nextWord()">跳过此词 →</button>
   </div>
 </div>
 
 <!-- 批量导入弹窗 -->
 <div class="modal-mask" id="import-modal">
   <div class="modal-box">
-    <h3>批量导入词库</h3>
-    <p>粘贴任意中文词语（用空格、逗号或换行隔开均可）。系统会自动拆分生字并生成拼音，加入“我的自定义”分类。</p>
-    <textarea id="batch-textarea" placeholder="例如：&#10;单薄 单于 落枕 丢三落四"></textarea>
+    <h3>批量导入整词词库</h3>
+    <p>粘贴中文词语（用空格、逗号或换行隔开均可）。每个词组将作为一道完整题目，自动生成多个田字格。</p>
+    <textarea id="batch-textarea" placeholder="例如：&#10;单薄 单于 落枕 丢三落四&#10;迫不及待 鬼鬼祟祟 声名狼藉"></textarea>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('import-modal')">取消</button>
       <button class="btn btn-primary" onclick="processBatchImport()">确认导入</button>
@@ -535,117 +536,104 @@
 </div>
 
 <script>
+  // 整词高频词库
   const DEFAULT_WORDS = [
-    { char: "尴", word: "尴尬", cat: "日常高频", meaning: "处境困难，不好处理" },
-    { char: "尬", word: "尴尬", cat: "日常高频", meaning: "神色、态度不自然" },
-    { char: "嚏", word: "喷嚏", cat: "日常高频", meaning: "鼻黏膜受刺激引起的急剧喷气" },
-    { char: "嗽", word: "咳嗽", cat: "日常高频", meaning: "呼吸道受刺激向外冲气发声" },
-    { char: "膝", word: "膝盖", cat: "日常高频", meaning: "大腿和小腿相连的关节前部" },
-    { char: "腻", word: "油腻", cat: "日常高频", meaning: "食物中油脂过多；厌烦" },
-    { char: "脾", word: "脾气", cat: "日常高频", meaning: "性情；容易发怒的习性" },
-    { char: "胃", word: "胃口", cat: "日常高频", meaning: "食欲（下方不是“月”的第一笔撇，而是竖）" },
-    { char: "肺", word: "肺腑", cat: "日常高频", meaning: "呼吸器官（右边是一竖贯穿，不是“市”）" },
-    { char: "喉", word: "喉咙", cat: "日常高频", meaning: "咽喉（中间没有多余的竖）" },
-    { char: "咙", word: "喉咙", cat: "日常高频", meaning: "喉部" },
-    { char: "胳", word: "胳膊", cat: "日常高频", meaning: "肩以下手腕以上的部分" },
-    { char: "膊", word: "胳膊", cat: "日常高频", meaning: "上肢（右上角别漏掉一点）" },
-    { char: "脊", word: "脊椎", cat: "日常高频", meaning: "人和动物背上中间的骨头" },
-    { char: "髓", word: "骨髓", cat: "日常高频", meaning: "骨头空腔里的物质" },
-    { char: "狼", word: "狼狈", cat: "日常高频", meaning: "困苦或受窘的样子" },
-    { char: "狈", word: "狼狈", cat: "日常高频", meaning: "传说中的一种兽（右边是“贝”）" },
-    { char: "羞", word: "害羞", cat: "日常高频", meaning: "因胆怯、怕生或做错了事而怕人看见" },
-    { char: "愧", word: "惭愧", cat: "日常高频", meaning: "因有缺点、错误而感到不安" },
-    { char: "懈", word: "松懈", cat: "日常高频", meaning: "注意力不集中，做事不抓紧" },
-    { char: "匙", word: "钥匙", cat: "生活物品", meaning: "开锁的工具" },
-    { char: "箕", word: "簸箕", cat: "生活物品", meaning: "扬米去糠或收垃圾的器具" },
-    { char: "簸", word: "簸箕", cat: "生活物品", meaning: "用簸箕上下颠动" },
-    { char: "帚", word: "扫帚", cat: "生活物品", meaning: "扫地的工具" },
-    { char: "筷", word: "筷子", cat: "生活物品", meaning: "夹取食物的用具" },
-    { char: "蒜", word: "大蒜", cat: "生活物品", meaning: "常见调味植物（下方是两个“示”）" },
-    { char: "姜", word: "生姜", cat: "生活物品", meaning: "常见调味植物" },
-    { char: "醋", word: "米醋", cat: "生活物品", meaning: "酸味调味品（左边是“酉”，别漏一横）" },
-    { char: "酱", word: "酱油", cat: "生活物品", meaning: "调味品（下方也是“酉”）" },
-    { char: "粥", word: "喝粥", cat: "生活物品", meaning: "米煮成的半流质食物（左右两个“弓”）" },
-    { char: "鞋", word: "皮鞋", cat: "生活物品", meaning: "穿在脚上的东西（右边是两个“土”）" },
-    { char: "袜", word: "袜子", cat: "生活物品", meaning: "穿在脚上的针织品（衣字旁，两点）" },
-    { char: "裤", word: "裤子", cat: "生活物品", meaning: "穿在腰腿间的衣物（衣字旁，两点）" },
-    { char: "枕", word: "枕头", cat: "生活物品", meaning: "躺着时垫在头下的东西" },
-    { char: "被", word: "被褥", cat: "生活物品", meaning: "睡觉时盖在身上的东西" },
-    { char: "褥", word: "被褥", cat: "生活物品", meaning: "睡觉时垫在身体下面的东西" },
-    { char: "窗", word: "窗户", cat: "生活物品", meaning: "房屋通风透光的装置（里面不是“夕”）" },
-    { char: "帘", word: "窗帘", cat: "生活物品", meaning: "遮蔽窗户的布" },
-    { char: "屉", word: "抽屉", cat: "生活物品", meaning: "桌子、柜子等家具中可抽动的匣子" },
-    { char: "柜", word: "衣柜", cat: "生活物品", meaning: "收藏衣物的家具" },
-    { char: "饕", word: "饕餮", cat: "易错成语", meaning: "传说中的贪食恶兽" },
-    { char: "餮", word: "饕餮", cat: "易错成语", meaning: "贪吃的人，美食家" },
-    { char: "鼎", word: "一言九鼎", cat: "易错成语", meaning: "说话分量重（共12画）" },
-    { char: "祟", word: "鬼鬼祟祟", cat: "易错成语", meaning: "行动偷偷摸摸（上方是“出”，不是“山”）" },
-    { char: "厉", word: "再接再厉", cat: "易错成语", meaning: "磨砺，继续努力（不是“励”）" },
-    { char: "筹", word: "一筹莫展", cat: "易错成语", meaning: "一点计策也施展不出" },
-    { char: "墨", word: "墨守成规", cat: "易错成语", meaning: "固执旧法，不肯改进" },
-    { char: "滥", word: "滥竽充数", cat: "易错成语", meaning: "没有真才实学混在行家里面" },
-    { char: "竽", word: "滥竽充数", cat: "易错成语", meaning: "古代一种簧管乐器" },
-    { char: "釜", word: "破釜沉舟", cat: "易错成语", meaning: "比喻下决心不顾一切干到底" },
-    { char: "辙", word: "南辕北辙", cat: "易错成语", meaning: "车轮压出的痕迹" },
-    { char: "辕", word: "南辕北辙", cat: "易错成语", meaning: "车前驾牲口的两根直木" },
-    { char: "鹜", word: "趋之若鹜", cat: "易错成语", meaning: "鸭子，比喻很多人争着去" },
-    { char: "炙", word: "脍炙人口", cat: "易错成语", meaning: "烤肉，比喻人人赞美" },
-    { char: "脍", word: "脍炙人口", cat: "易错成语", meaning: "切细的肉" },
-    { char: "掣", word: "风驰电掣", cat: "易错成语", meaning: "闪过，形容非常迅速" },
-    { char: "戛", word: "戛然而止", cat: "易错成语", meaning: "形容声音突然终止" },
-    { char: "寥", word: "寥寥无几", cat: "易错成语", meaning: "形容非常稀少" },
-    { char: "蔼", word: "和蔼可亲", cat: "易错成语", meaning: "态度温和，容易接近" },
-    { char: "寒", word: "寒暄", cat: "易错成语", meaning: "见面时谈天气冷暖之类的应酬话" },
-    { char: "赢", word: "输赢", cat: "易错结构", meaning: "下方依次是：亡、口、月、贝、凡" },
-    { char: "凹", word: "凹凸", cat: "易错结构", meaning: "共5画：竖、横折折、竖、横折、横" },
-    { char: "凸", word: "凹凸", cat: "易错结构", meaning: "共5画：竖、横、竖、横折折折、横" },
-    { char: "虐", word: "虐待", cat: "易错结构", meaning: "下方开口向右，不要写反" },
-    { char: "临", word: "光临", cat: "易错结构", meaning: "左边是两竖，不是一撇一竖" },
-    { char: "冠", word: "冠军", cat: "易错结构", meaning: "上方是秃宝盖（冖），没有点" },
-    { char: "冤", word: "冤枉", cat: "易错结构", meaning: "上方也是秃宝盖（冖），里面是“兔”" },
-    { char: "初", word: "当初", cat: "易错结构", meaning: "衣字旁（衤），两点，别写成示字旁" },
-    { char: "补", word: "补充", cat: "易错结构", meaning: "衣字旁（衤），两点" },
-    { char: "祝", word: "祝福", cat: "易错结构", meaning: "示字旁（礻），一点" },
-    { char: "拜", word: "拜年", cat: "易错结构", meaning: "右边是四横，不要少写一横" },
-    { char: "具", word: "具体", cat: "易错结构", meaning: "里面是三横，不要写成两横" },
-    { char: "真", word: "认真", cat: "易错结构", meaning: "里面也是三横" },
-    { char: "直", word: "一直", cat: "易错结构", meaning: "里面同样是三横" },
-    { char: "博", word: "渊博", cat: "易错结构", meaning: "右上角有一点，别漏掉" },
-    { char: "步", word: "散步", cat: "易错结构", meaning: "下半部分是“少”少一点，别多加点" },
-    { char: "染", word: "传染", cat: "易错结构", meaning: "右上角是“九”，不是“丸”" },
-    { char: "考", word: "考试", cat: "易错结构", meaning: "下方是一竖折折钩，别多写一横" },
-    { char: "纸", word: "白纸", cat: "易错结构", meaning: "右边“氏”下面没有点" },
-    { char: "低", word: "高低", cat: "易错结构", meaning: "右边“氏”下面有一点" }
+    // 日常高频
+    { word: "尴尬", cat: "日常高频", meaning: "处境困难，不好处理；神色、态度不自然" },
+    { word: "喷嚏", cat: "日常高频", meaning: "鼻黏膜受刺激引起的急剧吸气和喷气" },
+    { word: "咳嗽", cat: "日常高频", meaning: "呼吸道受刺激而突然向外冲气发声" },
+    { word: "膝盖", cat: "日常高频", meaning: "大腿和小腿相连的关节前部" },
+    { word: "油腻", cat: "日常高频", meaning: "食物中油脂过多；因过多而厌烦" },
+    { word: "脾气", cat: "日常高频", meaning: "性情；容易发怒的习性" },
+    { word: "胃口", cat: "日常高频", meaning: "食欲；对事物或活动的兴趣" },
+    { word: "肺腑", cat: "日常高频", meaning: "比喻内心深处" },
+    { word: "喉咙", cat: "日常高频", meaning: "咽喉，泛指喉部" },
+    { word: "胳膊", cat: "日常高频", meaning: "肩以下手腕以上的部分" },
+    { word: "脊椎", cat: "日常高频", meaning: "人和动物背上中间的柱状骨头" },
+    { word: "骨髓", cat: "日常高频", meaning: "骨头空腔里像胶冻一样的物质" },
+    { word: "狼狈", cat: "日常高频", meaning: "形容困苦或受窘的样子" },
+    { word: "惭愧", cat: "日常高频", meaning: "因有缺点、错误或未能尽责而感到不安" },
+    { word: "松懈", cat: "日常高频", meaning: "注意力不集中，做事不抓紧" },
+    { word: "寒暄", cat: "日常高频", meaning: "见面时谈天气冷暖之类的应酬话" },
+    { word: "殷勤", cat: "日常高频", meaning: "热情而周到" },
+    { word: "揣摩", cat: "日常高频", meaning: "反复思考推求" },
+    { word: "伺候", cat: "日常高频", meaning: "在人身边照料生活" },
+    { word: "执拗", cat: "日常高频", meaning: "固执任性，不听从别人的意见" },
+
+    // 生活物品
+    { word: "钥匙", cat: "生活物品", meaning: "开锁的工具，或比喻解决问题的方法" },
+    { word: "簸箕", cat: "生活物品", meaning: "扬米去糠或收垃圾的器具" },
+    { word: "扫帚", cat: "生活物品", meaning: "扫地的工具" },
+    { word: "筷子", cat: "生活物品", meaning: "夹取食物的细长条状用具" },
+    { word: "大蒜", cat: "生活物品", meaning: "常见辛辣调味植物" },
+    { word: "生姜", cat: "生活物品", meaning: "常见块茎调味植物" },
+    { word: "米醋", cat: "生活物品", meaning: "用粮食酿造的酸味调味品" },
+    { word: "酱油", cat: "生活物品", meaning: "用大豆等酿造的褐色咸味调味汁" },
+    { word: "袜子", cat: "生活物品", meaning: "穿在脚上的针织品" },
+    { word: "裤子", cat: "生活物品", meaning: "穿在腰腿间的衣物" },
+    { word: "枕头", cat: "生活物品", meaning: "躺着时垫在头下的东西" },
+    { word: "被褥", cat: "生活物品", meaning: "被子和褥子的统称" },
+    { word: "窗户", cat: "生活物品", meaning: "房屋通风透光的装置" },
+    { word: "抽屉", cat: "生活物品", meaning: "桌子、柜子等家具中可抽动的匣子" },
+    { word: "衣柜", cat: "生活物品", meaning: "收藏衣物的立式家具" },
+
+    // 易错成语
+    { word: "饕餮", cat: "易错成语", meaning: "传说中的贪食恶兽，常用来比喻贪吃的人" },
+    { word: "一言九鼎", cat: "易错成语", meaning: "一句话抵得上九鼎重，形容说话分量重" },
+    { word: "鬼鬼祟祟", cat: "易错成语", meaning: "形容行动偷偷摸摸，不光明正大" },
+    { word: "再接再厉", cat: "易错成语", meaning: "一次又一次地继续努力（注意不是“励”）" },
+    { word: "一筹莫展", cat: "易错成语", meaning: "一点计策也施展不出，形容毫无办法" },
+    { word: "墨守成规", cat: "易错成语", meaning: "固执旧法，一成不变，不肯改进" },
+    { word: "滥竽充数", cat: "易错成语", meaning: "没有真才实学的人混在行家里面充数" },
+    { word: "破釜沉舟", cat: "易错成语", meaning: "比喻下决心不顾一切地干到底" },
+    { word: "南辕北辙", cat: "易错成语", meaning: "行动和目的正好相反" },
+    { word: "趋之若鹜", cat: "易错成语", meaning: "像鸭子一样成群跑过去，比喻很多人争着去" },
+    { word: "脍炙人口", cat: "易错成语", meaning: "比喻好的诗文或事物人人都赞美和传诵" },
+    { word: "风驰电掣", cat: "易错成语", meaning: "形容非常迅速，像风吹电闪一样" },
+    { word: "戛然而止", cat: "易错成语", meaning: "形容声音突然终止" },
+    { word: "寥寥无几", cat: "易错成语", meaning: "形容数量非常稀少，没有几个" },
+    { word: "声名狼藉", cat: "易错成语", meaning: "形容名声败坏到了极点" },
+
+    // 易错结构/形近
+    { word: "输赢", cat: "易错结构", meaning: "胜负（“赢”下方依次是：亡、口、月、贝、凡）" },
+    { word: "凹凸", cat: "易错结构", meaning: "周围高中间低，或周围低中间高（均共5画）" },
+    { word: "虐待", cat: "易错结构", meaning: "用残暴狠毒的手段待人（下方开口向右）" },
+    { word: "光临", cat: "易错结构", meaning: "敬辞，称宾客来到（左边是两竖）" },
+    { word: "冠军", cat: "易错结构", meaning: "第一名（“冠”上方是秃宝盖，没有点）" },
+    { word: "冤枉", cat: "易错结构", meaning: "受到不公平的待遇或无端指责（秃宝盖）" },
+    { word: "祝福", cat: "易错结构", meaning: "祝愿人平安幸福（两个字均为示字旁，一点）" },
+    { word: "补充", cat: "易错结构", meaning: "原来不足或有损失时增加一部分（衣字旁，两点）" },
+    { word: "渊博", cat: "易错结构", meaning: "学识深而且广（“博”右上角别漏掉一点）" },
+    { word: "传染", cat: "易错结构", meaning: "病原体传播，或情绪习惯受影响（右上角是“九”）" }
   ];
 
   let wordList = [];
-  // records 结构: { "字": { status: 'mastered' | 'wrong', rightCount: 1, wrongCount: 0 } }
+  // records 结构: { "尴尬": { status: 'mastered' | 'wrong', rightCount: 1, wrongCount: 0 } }
   let records = {};
   let currentList = [];
   let currentIndex = 0;
   let currentMode = 'free';
   let currentFilter = 'all';
-  let writer = null;
-  let isRevealed = false;
-  let quizMistakes = 0;
 
-  const canvas = document.getElementById('free-canvas');
-  const ctx = canvas.getContext('2d');
-  let isDrawing = false;
-  let lastX = 0, lastY = 0;
+  let writers = [];
+  let canvases = [];
+  let isRevealed = false;
+  let currentGridSize = 180;
+
+  // 智能判分模式下的多字追踪状态
+  let quizCharIndex = 0;
+  let quizTotalMistakes = 0;
 
   function init() {
     loadFromStorage();
-    setupCanvas();
-    // 恢复上次筛选和进度
     document.getElementById('category-select').value = currentFilter;
     applyFilter(true);
   }
 
   function loadFromStorage() {
-    const savedWords = localStorage.getItem('tbwz_words_v3');
-    const savedRecords = localStorage.getItem('tbwz_records_v3');
-    const savedState = localStorage.getItem('tbwz_state_v3');
+    const savedWords = localStorage.getItem('tbwz_words_v4');
+    const savedRecords = localStorage.getItem('tbwz_records_v4');
+    const savedState = localStorage.getItem('tbwz_state_v4');
 
     wordList = savedWords ? JSON.parse(savedWords) : [...DEFAULT_WORDS];
     records = savedRecords ? JSON.parse(savedRecords) : {};
@@ -662,14 +650,14 @@
   }
 
   function saveToStorage() {
-    localStorage.setItem('tbwz_words_v3', JSON.stringify(wordList));
-    localStorage.setItem('tbwz_records_v3', JSON.stringify(records));
+    localStorage.setItem('tbwz_words_v4', JSON.stringify(wordList));
+    localStorage.setItem('tbwz_records_v4', JSON.stringify(records));
     saveStateOnly();
     updateStatsUI();
   }
 
   function saveStateOnly() {
-    localStorage.setItem('tbwz_state_v3', JSON.stringify({
+    localStorage.setItem('tbwz_state_v4', JSON.stringify({
       filter: currentFilter,
       index: currentIndex,
       mode: currentMode
@@ -677,28 +665,26 @@
   }
 
   function updateStatsUI() {
-    // 统计各状态字数（按去重后的单字统计）
-    const uniqueChars = new Set(wordList.map(w => w.char));
     let masteredCount = 0;
     let wrongCount = 0;
 
-    uniqueChars.forEach(ch => {
-      const rec = records[ch];
+    wordList.forEach(item => {
+      const rec = records[item.word];
       if (rec?.status === 'mastered') masteredCount++;
       else if (rec?.status === 'wrong') wrongCount++;
     });
 
-    const totalUnique = uniqueChars.size;
-    const unpracticedCount = Math.max(0, totalUnique - masteredCount - wrongCount);
-    const percent = totalUnique > 0 ? Math.round((masteredCount / totalUnique) * 100) : 0;
+    const total = wordList.length;
+    const unpracticedCount = Math.max(0, total - masteredCount - wrongCount);
+    const percent = total > 0 ? Math.round((masteredCount / total) * 100) : 0;
 
-    document.getElementById('mastered-summary').textContent = `已掌握：${masteredCount} / ${totalUnique} 字`;
+    document.getElementById('mastered-summary').textContent = `已掌握：${masteredCount} / ${total} 词`;
     document.getElementById('mastered-percent').textContent = `${percent}%`;
     document.getElementById('mastered-bar').style.width = `${percent}%`;
 
     const sel = document.getElementById('category-select');
-    sel.options[0].text = `全部词库 (${wordList.length})`;
-    sel.options[1].text = `未练习的新字 (${unpracticedCount})`;
+    sel.options[0].text = `全部词库 (${total})`;
+    sel.options[1].text = `未练习的新词 (${unpracticedCount})`;
     sel.options[2].text = `错题本 (${wrongCount})`;
     sel.options[3].text = `已掌握 (${masteredCount})`;
   }
@@ -712,11 +698,11 @@
     if (currentFilter === 'all') {
       currentList = [...wordList];
     } else if (currentFilter === 'unpracticed') {
-      currentList = wordList.filter(item => !records[item.char]);
+      currentList = wordList.filter(item => !records[item.word]);
     } else if (currentFilter === 'wrong') {
-      currentList = wordList.filter(item => records[item.char]?.status === 'wrong');
+      currentList = wordList.filter(item => records[item.word]?.status === 'wrong');
     } else if (currentFilter === 'mastered') {
-      currentList = wordList.filter(item => records[item.char]?.status === 'mastered');
+      currentList = wordList.filter(item => records[item.word]?.status === 'mastered');
     } else {
       currentList = wordList.filter(item => item.cat === currentFilter);
     }
@@ -740,30 +726,45 @@
     document.getElementById('status-text').textContent = "已打乱当前顺序";
   }
 
+  // 根据字数和屏幕宽度动态计算每个田字格尺寸
+  function calcGridSize(charCount) {
+    const containerWidth = Math.min(window.innerWidth - 64, 520);
+    if (charCount === 1) return Math.min(240, containerWidth);
+    if (charCount === 2) return Math.min(195, Math.floor((containerWidth - 12) / 2));
+    if (charCount === 3) return Math.min(155, Math.floor((containerWidth - 24) / 3));
+    // 4个字及以上，手机端两行两列、电脑端一排显示
+    if (window.innerWidth < 500) {
+      return Math.floor((containerWidth - 12) / 2);
+    }
+    return Math.min(125, Math.floor((containerWidth - 36) / 4));
+  }
+
   function renderCurrent() {
     const statusEl = document.getElementById('status-text');
     const charTagEl = document.getElementById('char-status-tag');
+    const gridsContainer = document.getElementById('grids-container');
     statusEl.className = 'status-bar';
+    gridsContainer.innerHTML = '';
+    writers = [];
+    canvases = [];
 
     if (currentList.length === 0) {
       charTagEl.textContent = "完成";
       charTagEl.className = "char-status-tag mastered";
       document.getElementById('category-tag').textContent = "提示";
       document.getElementById('pinyin-text').textContent = "暂无题目";
-      document.getElementById('word-text').textContent = "当前分类已空";
-      document.getElementById('meaning-text').textContent = "可切换其他分类或继续导入新词";
+      document.getElementById('meaning-text').textContent = "当前分类已空，可切换其他分类或导入新词";
       document.getElementById('progress-badge').textContent = "0 / 0";
-      clearCanvas();
-      document.getElementById('writer-target').innerHTML = '';
       document.getElementById('action-buttons').innerHTML = '';
       return;
     }
 
     if (currentIndex >= currentList.length) currentIndex = 0;
     const item = currentList[currentIndex];
-    const rec = records[item.char];
+    const chars = [...item.word];
+    const rec = records[item.word];
 
-    // 更新右上角记忆标记
+    // 右上角记忆状态标记
     if (!rec) {
       charTagEl.textContent = "未练习";
       charTagEl.className = "char-status-tag";
@@ -771,46 +772,69 @@
       charTagEl.textContent = `✓ 已掌握 (对${rec.rightCount}次)`;
       charTagEl.className = "char-status-tag mastered";
     } else {
-      charTagEl.textContent = `✗ 易错字 (错${rec.wrongCount}次)`;
+      charTagEl.textContent = `✗ 易错词 (错${rec.wrongCount}次)`;
       charTagEl.className = "char-status-tag wrong";
     }
 
     document.getElementById('progress-badge').textContent = `${currentIndex + 1} / ${currentList.length}`;
-    document.getElementById('category-tag').textContent = item.cat || '日常词库';
+    document.getElementById('category-tag').textContent = `${item.cat || '日常词库'} · 共 ${chars.length} 字`;
 
+    // 只显示完整拼音与解释，完全不透字
     const { pinyin } = pinyinPro;
     document.getElementById('pinyin-text').textContent = pinyin(item.word, { toneType: 'symbol' });
-
-    const maskedWord = item.word.replace(item.char, '【 】');
-    document.getElementById('word-text').textContent = maskedWord;
-    document.getElementById('meaning-text').textContent = item.meaning || '日常常用词';
+    document.getElementById('meaning-text').textContent = item.meaning || '请根据拼音写出完整词语';
 
     isRevealed = false;
-    quizMistakes = 0;
-    clearCanvas();
-    document.getElementById('writer-target').innerHTML = '';
+    currentGridSize = calcGridSize(chars.length);
+
+    // 为每个字生成独立的田字格
+    chars.forEach((ch, idx) => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'grid-wrapper';
+      wrapper.id = `grid-box-${idx}`;
+      wrapper.style.width = `${currentGridSize}px`;
+      wrapper.style.height = `${currentGridSize}px`;
+
+      wrapper.innerHTML = `
+        <div class="diagonal-1"></div>
+        <div class="diagonal-2"></div>
+        <div class="writer-target" id="writer-${idx}"></div>
+        <canvas class="free-canvas" id="canvas-${idx}" width="${currentGridSize}" height="${currentGridSize}"></canvas>
+      `;
+      gridsContainer.appendChild(wrapper);
+
+      const cvs = wrapper.querySelector('canvas');
+      canvases.push(cvs);
+      bindCanvasEvents(cvs);
+    });
 
     if (currentMode === 'free') {
-      canvas.style.display = 'block';
-      statusEl.textContent = "请在田字格内盲写，写完点击核对";
+      canvases.forEach(c => c.style.display = 'block');
+      statusEl.textContent = `请在上方 ${chars.length} 个田字格中写出完整词语`;
       renderFreeButtons(false);
     } else {
-      canvas.style.display = 'none';
-      statusEl.textContent = "请按正确笔顺一笔一画书写";
-      startHanziQuiz(item.char);
+      canvases.forEach(c => c.style.display = 'none');
+      quizCharIndex = 0;
+      quizTotalMistakes = 0;
+      statusEl.textContent = `请先写第 1 个字（共 ${chars.length} 个字）`;
+      startSequentialQuiz(chars);
       renderQuizButtons();
     }
   }
 
-  // ================= 模式 A：盲写自由手写 =================
-  function setupCanvas() {
-    ctx.lineWidth = 7;
+  // ================= 模式 A：整词盲写自由手写 =================
+  function bindCanvasEvents(cvs) {
+    const ctx = cvs.getContext('2d');
+    ctx.lineWidth = Math.max(4, Math.round(currentGridSize / 35));
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.strokeStyle = '#222222';
 
+    let drawing = false;
+    let lx = 0, ly = 0;
+
     const getPos = (e) => {
-      const rect = canvas.getBoundingClientRect();
+      const rect = cvs.getBoundingClientRect();
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
       return { x: clientX - rect.left, y: clientY - rect.top };
@@ -818,157 +842,201 @@
 
     const start = (e) => {
       if (isRevealed) return;
-      isDrawing = true;
+      drawing = true;
       const pos = getPos(e);
-      lastX = pos.x;
-      lastY = pos.y;
+      lx = pos.x;
+      ly = pos.y;
     };
 
     const move = (e) => {
-      if (!isDrawing || isRevealed) return;
+      if (!drawing || isRevealed) return;
       e.preventDefault();
       const pos = getPos(e);
       ctx.beginPath();
-      ctx.moveTo(lastX, lastY);
+      ctx.moveTo(lx, ly);
       ctx.lineTo(pos.x, pos.y);
       ctx.stroke();
-      lastX = pos.x;
-      lastY = pos.y;
+      lx = pos.x;
+      ly = pos.y;
     };
 
-    const end = () => { isDrawing = false; };
+    const end = () => { drawing = false; };
 
-    canvas.addEventListener('mousedown', start);
-    canvas.addEventListener('mousemove', move);
+    cvs.addEventListener('mousedown', start);
+    cvs.addEventListener('mousemove', move);
     window.addEventListener('mouseup', end);
-    canvas.addEventListener('touchstart', start, { passive: false });
-    canvas.addEventListener('touchmove', move, { passive: false });
+    cvs.addEventListener('touchstart', start, { passive: false });
+    cvs.addEventListener('touchmove', move, { passive: false });
     window.addEventListener('touchend', end);
   }
 
-  function clearCanvas() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  function clearAllCanvases() {
+    canvases.forEach(cvs => {
+      const ctx = cvs.getContext('2d');
+      ctx.clearRect(0, 0, cvs.width, cvs.height);
+    });
   }
 
   function revealFreeAnswer() {
     if (!currentList.length) return;
     const item = currentList[currentIndex];
+    const chars = [...item.word];
     isRevealed = true;
+    writers = [];
 
-    document.getElementById('writer-target').innerHTML = '';
-    writer = HanziWriter.create('writer-target', item.char, {
-      width: 260,
-      height: 260,
-      padding: 15,
-      strokeColor: 'rgba(184, 59, 42, 0.42)',
-      outlineColor: 'rgba(184, 59, 42, 0.12)',
-      strokeAnimationSpeed: 1.2,
-      delayBetweenStrokes: 150
+    chars.forEach((ch, idx) => {
+      const targetId = `writer-${idx}`;
+      document.getElementById(targetId).innerHTML = '';
+      const w = HanziWriter.create(targetId, ch, {
+        width: currentGridSize,
+        height: currentGridSize,
+        padding: Math.round(currentGridSize * 0.08),
+        strokeColor: 'rgba(184, 59, 42, 0.45)',
+        outlineColor: 'rgba(184, 59, 42, 0.12)',
+        strokeAnimationSpeed: 1.3,
+        delayBetweenStrokes: 120
+      });
+      writers.push(w);
+      // 错开一点时间依次播放笔顺
+      setTimeout(() => w.animateCharacter(), idx * 350);
     });
-    writer.animateCharacter();
 
-    document.getElementById('status-text').textContent = "红字为标准字形，对比后请标记对错";
+    document.getElementById('status-text').textContent = `正确答案：「${item.word}」，对比红字后标记对错`;
     renderFreeButtons(true);
+  }
+
+  function replayAllWriters() {
+    writers.forEach((w, idx) => {
+      setTimeout(() => w.animateCharacter(), idx * 350);
+    });
   }
 
   function renderFreeButtons(revealed) {
     const box = document.getElementById('action-buttons');
     if (!revealed) {
       box.innerHTML = `
-        <button class="btn" onclick="clearCanvas()">重写</button>
+        <button class="btn" onclick="clearAllCanvases()">全部重写</button>
         <button class="btn btn-primary" onclick="revealFreeAnswer()">核对答案</button>
       `;
     } else {
       box.innerHTML = `
-        <button class="btn" onclick="writer && writer.animateCharacter()">重播笔顺</button>
+        <button class="btn" onclick="replayAllWriters()">重播笔顺</button>
         <button class="btn btn-wrong" onclick="markResult(false)">写错了</button>
-        <button class="btn btn-right" onclick="markResult(true)">写对了</button>
+        <button class="btn btn-right" onclick="markResult(true)">全写对了</button>
       `;
     }
   }
 
-  // ================= 模式 B：智能判分 =================
-  function startHanziQuiz(char) {
-    document.getElementById('writer-target').innerHTML = '';
-    writer = HanziWriter.create('writer-target', char, {
-      width: 260,
-      height: 260,
-      padding: 15,
-      showOutline: false,
-      showCharacter: false,
-      strokeColor: '#222222',
-      highlightColor: '#b83b2a',
-      drawingWidth: 18,
-      leniency: 1.4,
-      showHintAfterMisses: 2
+  // ================= 模式 B：整词逐字智能判分 =================
+  function startSequentialQuiz(chars) {
+    writers = [];
+    chars.forEach((ch, idx) => {
+      const targetId = `writer-${idx}`;
+      document.getElementById(targetId).innerHTML = '';
+      const w = HanziWriter.create(targetId, ch, {
+        width: currentGridSize,
+        height: currentGridSize,
+        padding: Math.round(currentGridSize * 0.08),
+        showOutline: false,
+        showCharacter: false,
+        strokeColor: '#222222',
+        highlightColor: '#b83b2a',
+        drawingWidth: Math.max(12, Math.round(currentGridSize / 14)),
+        leniency: 1.45,
+        showHintAfterMisses: 2
+      });
+      writers.push(w);
     });
 
-    writer.quiz({
+    activateQuizForChar(chars, 0);
+  }
+
+  function activateQuizForChar(chars, idx) {
+    // 高亮当前正在判分的格子
+    chars.forEach((_, i) => {
+      const box = document.getElementById(`grid-box-${i}`);
+      if (box) box.classList.toggle('active-quiz-grid', i === idx);
+    });
+
+    const w = writers[idx];
+    if (!w) return;
+
+    w.quiz({
       onMistake: function() {
-        quizMistakes++;
+        quizTotalMistakes++;
         const statusEl = document.getElementById('status-text');
-        statusEl.textContent = `笔画或笔顺有误（已失误 ${quizMistakes} 次）`;
+        statusEl.textContent = `第 ${idx + 1} 个字笔画有误（本词累计失误 ${quizTotalMistakes} 次）`;
         statusEl.className = 'status-bar error';
       },
-      onCorrectStroke: function(strokeData) {
-        const statusEl = document.getElementById('status-text');
-        statusEl.textContent = `第 ${strokeData.strokeNum + 1} 笔正确，还剩 ${strokeData.strokesRemaining} 笔`;
-        statusEl.className = 'status-bar';
-      },
-      onComplete: function(summaryData) {
-        const statusEl = document.getElementById('status-text');
-        const passed = summaryData.totalMistakes <= 1;
-        if (passed) {
-          statusEl.textContent = `🎉 书写完成！（失误 ${summaryData.totalMistakes} 次，已标记掌握）`;
-          statusEl.className = 'status-bar success';
+      onComplete: function() {
+        if (idx + 1 < chars.length) {
+          quizCharIndex = idx + 1;
+          const statusEl = document.getElementById('status-text');
+          statusEl.textContent = `第 ${idx + 1} 个字完成，请继续写第 ${idx + 2} 个字`;
+          statusEl.className = 'status-bar';
+          activateQuizForChar(chars, idx + 1);
         } else {
-          statusEl.textContent = `书写完成，失误 ${summaryData.totalMistakes} 次，已标记为易错字`;
-          statusEl.className = 'status-bar error';
+          // 整词全部写完
+          document.getElementById(`grid-box-${idx}`)?.classList.remove('active-quiz-grid');
+          const statusEl = document.getElementById('status-text');
+          const passed = quizTotalMistakes <= 1;
+          if (passed) {
+            statusEl.textContent = `🎉 整词「${chars.join('')}」完成！（失误 ${quizTotalMistakes} 次，已掌握）`;
+            statusEl.className = 'status-bar success';
+          } else {
+            statusEl.textContent = `整词完成，累计失误 ${quizTotalMistakes} 次，已加入错题本`;
+            statusEl.className = 'status-bar error';
+          }
+          recordPracticeResult(passed);
+          renderBadgeOnly();
         }
-        recordPracticeResult(passed);
-        // 刷新右上角状态角标
-        renderBadgeOnly();
       }
     });
   }
 
-  function renderBadgeOnly() {
-    if (!currentList.length) return;
-    const item = currentList[currentIndex];
-    const rec = records[item.char];
-    const charTagEl = document.getElementById('char-status-tag');
-    if (rec?.status === 'mastered') {
-      charTagEl.textContent = `✓ 已掌握 (对${rec.rightCount}次)`;
-      charTagEl.className = "char-status-tag mastered";
-    } else if (rec?.status === 'wrong') {
-      charTagEl.textContent = `✗ 易错字 (错${rec.wrongCount}次)`;
-      charTagEl.className = "char-status-tag wrong";
+  function hintCurrentQuizChar() {
+    if (writers[quizCharIndex]) {
+      writers[quizCharIndex].showOutline();
     }
   }
 
   function renderQuizButtons() {
     const box = document.getElementById('action-buttons');
     box.innerHTML = `
-      <button class="btn" onclick="writer && writer.showOutline()">提示轮廓</button>
+      <button class="btn" onclick="hintCurrentQuizChar()">提示当前字</button>
       <button class="btn" onclick="renderCurrent()">重来</button>
-      <button class="btn btn-primary" onclick="nextChar()">下一个</button>
+      <button class="btn btn-primary" onclick="nextWord()">下一个</button>
     `;
   }
 
-  // ================= 记忆状态记录 =================
+  // ================= 记忆状态与批量导入 =================
+  function renderBadgeOnly() {
+    if (!currentList.length) return;
+    const item = currentList[currentIndex];
+    const rec = records[item.word];
+    const charTagEl = document.getElementById('char-status-tag');
+    if (rec?.status === 'mastered') {
+      charTagEl.textContent = `✓ 已掌握 (对${rec.rightCount}次)`;
+      charTagEl.className = "char-status-tag mastered";
+    } else if (rec?.status === 'wrong') {
+      charTagEl.textContent = `✗ 易错词 (错${rec.wrongCount}次)`;
+      charTagEl.className = "char-status-tag wrong";
+    }
+  }
+
   function recordPracticeResult(isCorrect) {
     if (!currentList.length) return;
-    const char = currentList[currentIndex].char;
-    const prev = records[char] || { status: 'new', rightCount: 0, wrongCount: 0 };
+    const word = currentList[currentIndex].word;
+    const prev = records[word] || { status: 'new', rightCount: 0, wrongCount: 0 };
 
     if (isCorrect) {
-      records[char] = {
+      records[word] = {
         status: 'mastered',
         rightCount: prev.rightCount + 1,
         wrongCount: prev.wrongCount
       };
     } else {
-      records[char] = {
+      records[word] = {
         status: 'wrong',
         rightCount: prev.rightCount,
         wrongCount: prev.wrongCount + 1
@@ -979,12 +1047,11 @@
 
   function markResult(isCorrect) {
     recordPracticeResult(isCorrect);
-    nextChar();
+    nextWord();
   }
 
-  function nextChar() {
+  function nextWord() {
     if (currentList.length === 0) return;
-    // 在动态状态过滤下（如“未练习”或“错题本”），练完当前字后该字可能已移出当前列表
     if (['unpracticed', 'wrong', 'mastered'].includes(currentFilter)) {
       applyFilter(true);
       return;
@@ -1002,7 +1069,6 @@
     renderCurrent();
   }
 
-  // 添加与批量导入
   function addSingleWord() {
     const input = document.getElementById('custom-input');
     const raw = input.value.trim();
@@ -1014,7 +1080,7 @@
       onFilterChange();
       document.getElementById('status-text').textContent = `已添加「${raw}」`;
     } else {
-      alert('请输入有效的中文汉字（或该词已存在）');
+      alert('请输入有效的中文词语（或该词已存在）');
     }
   }
 
@@ -1033,38 +1099,35 @@
     if (added > 0) {
       document.getElementById('category-select').value = '自定义';
       onFilterChange();
-      document.getElementById('status-text').textContent = `🎉 成功批量导入 ${added} 个生字！`;
+      document.getElementById('status-text').textContent = `🎉 成功批量导入 ${added} 个词语！`;
     } else {
-      alert('未检测到新的有效汉字');
+      alert('未检测到新的有效中文词语');
     }
   }
 
+  // 按完整词组导入，不再拆成单字
   function importWordsFromText(rawText) {
     const tokens = rawText.split(/[\s,，、；;。！？!?\n\r]+/).filter(Boolean);
     let addedCount = 0;
 
-    tokens.reverse().forEach(token => {
-      const chars = token.match(/[\u4e00-\u9fa5]/g);
-      if (!chars) return;
-      [...chars].reverse().forEach(ch => {
-        const exists = wordList.some(item => item.char === ch && item.word === token);
-        if (!exists) {
-          wordList.unshift({
-            char: ch,
-            word: token,
-            cat: '自定义',
-            meaning: '自定义导入词库'
-          });
-          addedCount++;
-        }
-      });
+    [...tokens].reverse().forEach(token => {
+      const cleanWord = (token.match(/[\u4e00-\u9fa5]/g) || []).join('');
+      if (!cleanWord || cleanWord.length > 8) return;
+      const exists = wordList.some(item => item.word === cleanWord);
+      if (!exists) {
+        wordList.unshift({
+          word: cleanWord,
+          cat: '自定义',
+          meaning: '自定义导入词语'
+        });
+        addedCount++;
+      }
     });
 
     if (addedCount > 0) saveToStorage();
     return addedCount;
   }
 
-  // 备份与恢复
   function exportBackup() {
     const data = JSON.stringify({ words: wordList, records: records });
     document.getElementById('backup-textarea').value = data;
@@ -1093,9 +1156,9 @@
 
   function resetAllData() {
     if (confirm('确定清空所有练习记录和自定义词库，恢复初始状态吗？')) {
-      localStorage.removeItem('tbwz_words_v3');
-      localStorage.removeItem('tbwz_records_v3');
-      localStorage.removeItem('tbwz_state_v3');
+      localStorage.removeItem('tbwz_words_v4');
+      localStorage.removeItem('tbwz_records_v4');
+      localStorage.removeItem('tbwz_state_v4');
       currentFilter = 'all';
       currentIndex = 0;
       loadFromStorage();
